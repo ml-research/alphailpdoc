@@ -1,0 +1,2 @@
+# alphailpdoc
+Documentation of alphaILP
