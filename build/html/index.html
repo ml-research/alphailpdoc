@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to alphailp’s documentation! &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Building a Reasoner" href="Building-a-Reasoner.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#">
+            <img src="_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Welcome to alphailp’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-alphailp-s-documentation">
+<h1>Welcome to alphailp’s documentation!<a class="headerlink" href="#welcome-to-alphailp-s-documentation" title="Permalink to this heading"></a></h1>
+<p>alphaILP is a neuro-symbolic framework that can learn generalized rules from complex visual scenes.
+alphaILP learns to represent scenes as logic programs—intuitively, logical atoms correspond to objects, attributes, and relations, and clauses encode highlevel scene information. alphaILP has an end-to-end reasoning architecture
+from visual inputs. Using it, alphaILP performs differentiable inductive logic programming on complex visual scenes, i.e., the logical rules are
+learned by gradient descent.
+<a class="reference external" href="https://github.com/ml-research/alphailp">[GitHub]</a></p>
+</section>
+<section id="introduction-by-examples">
+<h1>Introduction by Examples<a class="headerlink" href="#introduction-by-examples" title="Permalink to this heading"></a></h1>
+<p>We provide an introduction by giving specific examples of use cases of alphaILP.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="Building-a-Reasoner.html"><span class="doc">Building a Reasoner</span></a> : A brief introduction about how to build a differentiable reasoner</p></li>
+<li><p><a class="reference internal" href="Building-a-Learner.html"><span class="doc">Building a Learner</span></a> : A brief introduction about how to perform rule learning from visual scenes using alphaILP.</p></li>
+<li><p><a class="reference internal" href="Compositional-Test.html"><span class="doc">Compositional Test by Differentiable Reasoning</span></a> : A demonstration of an use case of the differentiable reasoner as a compositional checker for industrial automation.</p></li>
+</ul>
+</section>
+<section id="acknowledgements">
+<h1>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Permalink to this heading"></a></h1>
+<p>This project has been supported by <a class="reference external" href="https://www.spaicer.de/en/">SPAICER (01MK20015E)</a> , <a class="reference external" href="https://tailor-network.eu/">TAILOR (952215)</a>, and <a class="reference external" href="https://careers.aico.ai/">AICO</a>.</p>
+<a class="reference internal image-reference" href="_static/spaicer.png"><img alt="_static/spaicer.png" src="_static/spaicer.png" style="height: 100px;" /></a>
+<a class="reference internal image-reference" href="_static/tailor.png"><img alt="_static/tailor.png" src="_static/tailor.png" style="height: 100px;" /></a>
+<a class="reference internal image-reference" href="_static/aico.png"><img alt="_static/aico.png" src="_static/aico.png" style="height: 100px;" /></a>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Reasoner.html">Building a Reasoner</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Reasoner.html#solving-kandinsky-patterns">Solving Kandinsky Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Reasoner.html#lanuage-definition">Lanuage Definition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Building-a-Reasoner.html#neural-predicates">Neural Predicates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Building-a-Reasoner.html#constants">Constants</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Reasoner.html#writing-logic-programs">Writing Logic Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Reasoner.html#specify-hyperparameters">Specify Hyperparameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Reasoner.html#build-a-reasoner">Build a Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Reasoner.html#load-data">Load Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Learner.html">Building a Learner</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#solving-kandinsky-patterns">Solving Kandinsky Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#lanuage-definition">Lanuage Definition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Building-a-Learner.html#neural-predicates">Neural Predicates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Building-a-Learner.html#constants">Constants</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#specify-hyperparameters">Specify Hyperparameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#providing-background-knowledge">Providing Background Knowledge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#build-a-reasoner">Build a Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#load-data">Load Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#build-a-clause-generator">Build a Clause Generator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Building-a-Learner.html#weight-learning">Weight Learning</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Compositional-Test.html">Compositional Test by Differentiable Reasoning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Compositional-Test.html#lanuage-definition">Lanuage Definition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Compositional-Test.html#neural-predicates">Neural Predicates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Compositional-Test.html#constants">Constants</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Compositional-Test.html#specify-hyperparameters">Specify Hyperparameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Compositional-Test.html#writing-logic-programs">Writing Logic Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Compositional-Test.html#build-a-reasoner">Build a Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Compositional-Test.html#load-data">Load Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="src.html">src package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.fol.html">src.fol package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#src-fol-data-utils-module">src.fol.data_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#src-fol-exp-parser-module">src.fol.exp_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#src-fol-language-module">src.fol.language module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#src-fol-logic-module">src.fol.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#src-fol-logic-ops-module">src.fol.logic_ops module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.fol.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.slot_attention.html">src.slot_attention package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-data-module">src.slot_attention.data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-model-module">src.slot_attention.model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-preprocess-images-module">src.slot_attention.preprocess-images module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-train-module">src.slot_attention.train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-utils-module">src.slot_attention.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.slot_attention.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.html">src.yolov5 package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-clause-generator-module">src.clause_generator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-data-clevr-module">src.data_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-data-kandinsky-module">src.data_kandinsky module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-eval-clause-infer-module">src.eval_clause_infer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-facts-converter-module">src.facts_converter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-infer-module">src.infer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-logic-utils-module">src.logic_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-mode-declaration-module">src.mode_declaration module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-neural-utils-module">src.neural_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-nsfr-module">src.nsfr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-nsfr-utils-module">src.nsfr_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-optimizer-module">src.optimizer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-percept-module">src.percept module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-predict-clevr-module">src.predict_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-predict-kandinsky-module">src.predict_kandinsky module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-refinement-module">src.refinement module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-tensor-encoder-module">src.tensor_encoder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-torch-utils-module">src.torch_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-train-module">src.train module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-train-cnn-module">src.train_cnn module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-train-cnn-clevr-module">src.train_cnn_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-train-sa-mlp-clevr-module">src.train_sa_mlp_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-train-yolo-mlp-module">src.train_yolo_mlp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-valuation-module">src.valuation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#src-valuation-func-module">src.valuation_func module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Building-a-Reasoner.html" class="btn btn-neutral float-right" title="Building a Reasoner" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

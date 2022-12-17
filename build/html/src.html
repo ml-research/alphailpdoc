@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src package &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="src.fol package" href="src.fol.html" />
+    <link rel="prev" title="Acknowledgements" href="acknowledgements.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html">
+            <img src="_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">src package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.fol.html">src.fol package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.slot_attention.html">src.slot_attention package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.html">src.yolov5 package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-clause-generator-module">src.clause_generator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-data-clevr-module">src.data_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-data-kandinsky-module">src.data_kandinsky module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-eval-clause-infer-module">src.eval_clause_infer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-facts-converter-module">src.facts_converter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-infer-module">src.infer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-logic-utils-module">src.logic_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-mode-declaration-module">src.mode_declaration module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-neural-utils-module">src.neural_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-nsfr-module">src.nsfr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-nsfr-utils-module">src.nsfr_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-optimizer-module">src.optimizer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-percept-module">src.percept module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-predict-clevr-module">src.predict_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-predict-kandinsky-module">src.predict_kandinsky module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-refinement-module">src.refinement module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-tensor-encoder-module">src.tensor_encoder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-torch-utils-module">src.torch_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-train-module">src.train module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-train-cnn-module">src.train_cnn module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-train-cnn-clevr-module">src.train_cnn_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-train-sa-mlp-clevr-module">src.train_sa_mlp_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-train-yolo-mlp-module">src.train_yolo_mlp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-valuation-module">src.valuation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src-valuation-func-module">src.valuation_func module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">src package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/src.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-package">
+<h1>src package<a class="headerlink" href="#src-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="src.fol.html">src.fol package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#src-fol-data-utils-module">src.fol.data_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#src-fol-exp-parser-module">src.fol.exp_parser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#src-fol-language-module">src.fol.language module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#src-fol-logic-module">src.fol.logic module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#src-fol-logic-ops-module">src.fol.logic_ops module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.fol.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src.slot_attention.html">src.slot_attention package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-data-module">src.slot_attention.data module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-model-module">src.slot_attention.model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-preprocess-images-module">src.slot_attention.preprocess-images module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-train-module">src.slot_attention.train module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#src-slot-attention-utils-module">src.slot_attention.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.slot_attention.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src.yolov5.html">src.yolov5 package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html">src.yolov5.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src-yolov5-models-common-module">src.yolov5.models.common module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src-yolov5-models-experimental-module">src.yolov5.models.experimental module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src-yolov5-models-export-module">src.yolov5.models.export module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src-yolov5-models-yolo-module">src.yolov5.models.yolo module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html">src.yolov5.utils package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-activations-module">src.yolov5.utils.activations module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-autoanchor-module">src.yolov5.utils.autoanchor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-datasets-module">src.yolov5.utils.datasets module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-general-module">src.yolov5.utils.general module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-google-utils-module">src.yolov5.utils.google_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-loss-module">src.yolov5.utils.loss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-metrics-module">src.yolov5.utils.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-plots-module">src.yolov5.utils.plots module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src-yolov5-utils-torch-utils-module">src.yolov5.utils.torch_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-clause-generator-module">
+<h2>src.clause_generator module<a class="headerlink" href="#src-clause-generator-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-data-clevr-module">
+<h2>src.data_clevr module<a class="headerlink" href="#src-data-clevr-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-data-kandinsky-module">
+<h2>src.data_kandinsky module<a class="headerlink" href="#src-data-kandinsky-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-eval-clause-infer-module">
+<h2>src.eval_clause_infer module<a class="headerlink" href="#src-eval-clause-infer-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-facts-converter-module">
+<h2>src.facts_converter module<a class="headerlink" href="#src-facts-converter-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-infer-module">
+<h2>src.infer module<a class="headerlink" href="#src-infer-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-logic-utils-module">
+<h2>src.logic_utils module<a class="headerlink" href="#src-logic-utils-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-mode-declaration-module">
+<h2>src.mode_declaration module<a class="headerlink" href="#src-mode-declaration-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-neural-utils-module">
+<h2>src.neural_utils module<a class="headerlink" href="#src-neural-utils-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-nsfr-module">
+<h2>src.nsfr module<a class="headerlink" href="#src-nsfr-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-nsfr-utils-module">
+<h2>src.nsfr_utils module<a class="headerlink" href="#src-nsfr-utils-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-optimizer-module">
+<h2>src.optimizer module<a class="headerlink" href="#src-optimizer-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-percept-module">
+<h2>src.percept module<a class="headerlink" href="#src-percept-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-predict-clevr-module">
+<h2>src.predict_clevr module<a class="headerlink" href="#src-predict-clevr-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-predict-kandinsky-module">
+<h2>src.predict_kandinsky module<a class="headerlink" href="#src-predict-kandinsky-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-refinement-module">
+<h2>src.refinement module<a class="headerlink" href="#src-refinement-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-tensor-encoder-module">
+<h2>src.tensor_encoder module<a class="headerlink" href="#src-tensor-encoder-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-torch-utils-module">
+<h2>src.torch_utils module<a class="headerlink" href="#src-torch-utils-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-train-module">
+<h2>src.train module<a class="headerlink" href="#src-train-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-train-cnn-module">
+<h2>src.train_cnn module<a class="headerlink" href="#src-train-cnn-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-train-cnn-clevr-module">
+<h2>src.train_cnn_clevr module<a class="headerlink" href="#src-train-cnn-clevr-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-train-sa-mlp-clevr-module">
+<h2>src.train_sa_mlp_clevr module<a class="headerlink" href="#src-train-sa-mlp-clevr-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-train-yolo-mlp-module">
+<h2>src.train_yolo_mlp module<a class="headerlink" href="#src-train-yolo-mlp-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-valuation-module">
+<h2>src.valuation module<a class="headerlink" href="#src-valuation-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="src-valuation-func-module">
+<h2>src.valuation_func module<a class="headerlink" href="#src-valuation-func-module" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="acknowledgements.html" class="btn btn-neutral float-left" title="Acknowledgements" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="src.fol.html" class="btn btn-neutral float-right" title="src.fol package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>
