@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.refinement &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html">
+            <img src="../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.refinement</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.refinement</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">fol.logic</span> <span class="kn">import</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">Clause</span><span class="p">,</span> <span class="n">FuncTerm</span><span class="p">,</span> <span class="n">Var</span>
+<span class="kn">from</span> <span class="nn">fol.logic_ops</span> <span class="kn">import</span> <span class="n">subs</span>
+
+
+<span class="c1"># TODOL refine_from_modeb, generate_by_refinement</span>
+<div class="viewcode-block" id="RefinementGenerator"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator">[docs]</a><span class="k">class</span> <span class="nc">RefinementGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    refinement operations for clause generation</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lang : .language.Language</span>
+<span class="sd">    max_depth : int</span>
+<span class="sd">        max depth of nests of function symbols</span>
+<span class="sd">    max_body_len : int</span>
+<span class="sd">        max number of atoms in body of clauses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lang</span><span class="p">,</span> <span class="n">mode_declarations</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lang</span> <span class="o">=</span> <span class="n">lang</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode_declarations</span> <span class="o">=</span> <span class="n">mode_declarations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vi</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># counter for new variable generation</span>
+
+
+    <span class="k">def</span> <span class="nf">_init_recall_counter_dic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode_declarations</span><span class="p">):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">mode_declarations</span><span class="p">:</span>
+            <span class="n">dic</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">md</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">dic</span>
+
+    <span class="k">def</span> <span class="nf">_check_recall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">,</span> <span class="n">mode_declaration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a boolean value that represents the mode declaration can be used or not</span>
+<span class="sd">        in terms of the recall.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">clause</span><span class="o">.</span><span class="n">count_by_predicate</span><span class="p">(</span><span class="n">mode_declaration</span><span class="o">.</span><span class="n">pred</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">mode_declaration</span><span class="o">.</span><span class="n">recall</span>
+        <span class="c1">#return self.recall_counter_dic[str(mode_declaration)] &lt; mode_declaration.recall</span>
+
+    <span class="k">def</span> <span class="nf">_increment_recall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode_declaration</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recall_counter_dic</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">mode_declaration</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<div class="viewcode-block" id="RefinementGenerator.get_max_obj_id"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.get_max_obj_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_max_obj_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="n">object_vars</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_vars_by_dtype</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">)</span>
+        <span class="n">object_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">object_vars</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">object_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">object_ids</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__generate_new_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="c1"># We assume that we have only object variables as new variables</span>
+        <span class="c1"># O1, O2, ....</span>
+        <span class="c1">#new_var = Var(&#39;O&#39; + str(self.object_counter))</span>
+        <span class="c1">#new_var = Var(&quot;__Y&quot; + str(self.vi) + &quot;__&quot;)</span>
+        <span class="c1">#self.vi += 1</span>
+        <span class="c1">#return new_var</span>
+        <span class="c1">#new_var = Var(&#39;O&#39; + str(n+1))</span>
+        <span class="c1">#self.object_counter += 1</span>
+        <span class="k">return</span> <span class="n">new_var</span>
+
+
+
+<div class="viewcode-block" id="RefinementGenerator.generate_new_variable"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.generate_new_variable">[docs]</a>    <span class="k">def</span> <span class="nf">generate_new_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="n">obj_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_max_obj_id</span><span class="p">(</span><span class="n">clause</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Var</span><span class="p">(</span><span class="s1">&#39;O&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj_id</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RefinementGenerator.refine_from_modeb"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.refine_from_modeb">[docs]</a>    <span class="k">def</span> <span class="nf">refine_from_modeb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">,</span> <span class="n">modeb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate clauses by adding atoms to body using mode declaration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">              clause (Clause): A clause.</span>
+<span class="sd">              modeb (ModeDeclaration): A mode declaration for body.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># list(list(Term))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_recall</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">modeb</span><span class="p">):</span>
+            <span class="c1"># the input modeb has been used as many as its recall (maximum number  to be called) already</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">terms_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_term_combinations</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">modeb</span><span class="p">)</span>
+
+        <span class="n">C_refined</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">terms</span> <span class="ow">in</span> <span class="n">terms_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">terms</span><span class="p">))):</span>
+                <span class="c1"># terms: (O0, X)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">modeb</span><span class="o">.</span><span class="n">ordered</span><span class="p">:</span>
+                    <span class="n">terms</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
+                <span class="n">new_atom</span> <span class="o">=</span> <span class="n">Atom</span><span class="p">(</span><span class="n">modeb</span><span class="o">.</span><span class="n">pred</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">new_atom</span> <span class="ow">in</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
+                    <span class="n">new_clause</span> <span class="o">=</span> <span class="n">Clause</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="p">,</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_atom</span><span class="p">])</span>
+                    <span class="n">C_refined</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_clause</span><span class="p">)</span>
+        <span class="c1">#self._increment_recall(modeb)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">C_refined</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RefinementGenerator.generate_term_combinations"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.generate_term_combinations">[docs]</a>    <span class="k">def</span> <span class="nf">generate_term_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">,</span> <span class="n">modeb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate possible term list for new body atom.</span>
+<span class="sd">        Enumerate possible assignments for each place in the mode predicate,</span>
+<span class="sd">        generate all possible assignments by enumerating the combinations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            modeb (ModeDeclaration): A mode declaration for body.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">assignments_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mt</span> <span class="ow">in</span> <span class="n">modeb</span><span class="o">.</span><span class="n">mode_terms</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">mt</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;+&#39;</span><span class="p">:</span>
+                <span class="c1"># var_candidates = clause.var_all()</span>
+                <span class="n">assignments</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_vars_by_dtype</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">mt</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                <span class="c1"># get new variable</span>
+                <span class="c1"># How to think as candidates? maybe [O3] etc.</span>
+                <span class="c1"># we get only object variable e.g. O3</span>
+                <span class="c1"># new_var = self.generate_new_variable()</span>
+                <span class="n">assignments</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_new_variable</span><span class="p">(</span><span class="n">clause</span><span class="p">)]</span>
+            <span class="k">elif</span> <span class="n">mt</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;#&#39;</span><span class="p">:</span>
+                <span class="c1"># consts = self.lang.get_by_dtype(mt.mode.dtype)</span>
+                <span class="n">assignments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">get_by_dtype</span><span class="p">(</span><span class="n">mt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">assignments_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">assignments</span><span class="p">)</span>
+        <span class="c1"># generate all combinations by cartesian product</span>
+        <span class="c1"># e.g. [[O2], [red,blue,yellow]]</span>
+        <span class="c1"># -&gt; [[O2,red],[O2,blue],[O2,yellow]]</span>
+        <span class="c1">##print(assignments_list)</span>
+        <span class="c1">##print(list(itertools.product(*assignments_list)))</span>
+        <span class="c1">##print(clause, modeb, assignments_list)</span>
+        <span class="c1">#print(clause, modeb)</span>
+        <span class="c1">#print(assignments_list)</span>
+        <span class="k">if</span> <span class="n">modeb</span><span class="o">.</span><span class="n">ordered</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">assignments_list</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">assignments_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">modeb</span><span class="o">.</span><span class="n">pred</span><span class="o">.</span><span class="n">arity</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RefinementGenerator.refinement_clause"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.refinement_clause">[docs]</a>    <span class="k">def</span> <span class="nf">refinement_clause</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="n">C_refined</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">modeb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_declarations</span><span class="p">:</span>
+            <span class="n">new_clauses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">refine_from_modeb</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">modeb</span><span class="p">)</span>
+            <span class="c1">#new_clauses = [c for c in new_clauses if self._is_valid(c)]</span>
+            <span class="n">C_refined</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_clauses</span><span class="p">)</span>
+            <span class="c1">##print(C_refined)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">C_refined</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="RefinementGenerator.refinement"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.refinement">[docs]</a>    <span class="k">def</span> <span class="nf">refinement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clauses</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform refinement for given set of clauses.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            clauses (list(Clauses)): A set of clauses.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            list(Clauses): A set of refined clauses using modeb declarations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">clause</span> <span class="ow">in</span> <span class="n">clauses</span><span class="p">:</span>
+            <span class="n">C_refined</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">refinement_clause</span><span class="p">(</span><span class="n">clause</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">C_refined</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">result</span><span class="p">):</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+    <span class="k">def</span> <span class="nf">__refinement_clauses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">C</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        apply refinement operations to each element in given set of clauses</span>
+<span class="sd">        Inputs</span>
+<span class="sd">        ------</span>
+<span class="sd">        C : List[.logic.Clause]</span>
+<span class="sd">            set of clauses</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        C_refined : List[.logic.Clause]</span>
+<span class="sd">            refined clauses</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">C_refined</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">clause</span> <span class="ow">in</span> <span class="n">C</span><span class="p">:</span>
+            <span class="n">C_refined</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">refinement</span><span class="p">(</span><span class="n">clause</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">C_refined</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">___refinement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        refinement operator that consist of 4 types of refinement</span>
+<span class="sd">        Inputs</span>
+<span class="sd">        ______</span>
+<span class="sd">        clause : .logic.Clause</span>
+<span class="sd">            input clause to be refined</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        refined_clauses : List[.logic.Clause]</span>
+<span class="sd">            refined clauses</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># refs = list(set(self.add_atom(clause) + self.apply_func(clause) +</span>
+        <span class="c1">#                self.subs_var(clause) + self.subs_const(clause)))</span>
+        <span class="c1"># refs = list(set(self.add_atom(clause)))</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_attribute_atom</span><span class="p">(</span><span class="n">clause</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relation_atom</span><span class="p">(</span><span class="n">clause</span><span class="p">)))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;&#39;</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">ref</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">terms</span><span class="p">]:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="RefinementGenerator.add_atom"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.add_atom">[docs]</a>    <span class="k">def</span> <span class="nf">add_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        add p(x_1, ..., x_n) to the body</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check body length</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_body_len</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">all_consts</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">preds</span><span class="p">:</span>
+            <span class="n">var_candidates</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_vars</span><span class="p">()</span>
+            <span class="c1"># Select X_1, ..., X_n for new atom p(X_1, ..., X_n)</span>
+            <span class="c1"># 1. Selection 2. Ordering</span>
+            <span class="k">for</span> <span class="n">vs</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="n">var_candidates</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">arity</span><span class="p">):</span>
+                <span class="n">new_atom</span> <span class="o">=</span> <span class="n">Atom</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">vs</span><span class="p">)</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span>
+                <span class="k">if</span> <span class="n">new_atom</span> <span class="o">!=</span> <span class="n">head</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">new_atom</span> <span class="ow">in</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">):</span>
+                    <span class="n">new_body</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_atom</span><span class="p">]</span>
+                    <span class="n">new_clause</span> <span class="o">=</span> <span class="n">Clause</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">new_body</span><span class="p">)</span>
+                    <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_clause</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span></div>
+
+<div class="viewcode-block" id="RefinementGenerator.add_attribute_atom"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.add_attribute_atom">[docs]</a>    <span class="k">def</span> <span class="nf">add_attribute_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_declarations</span><span class="o">.</span><span class="n">get_attribute_preds</span><span class="p">:</span>
+            <span class="n">var_candidates</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_vars</span><span class="p">()</span>
+            <span class="c1"># Select X_1, ..., X_n for new atom p(X_1, ..., X_n)</span>
+            <span class="c1"># 1. Selection 2. Ordering</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Invalid arity in refinement for attribute atoms, arity: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+            <span class="n">attr_dtype</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">dtypes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">var_candidates</span><span class="p">:</span>
+                <span class="n">consts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">get_by_dtype</span><span class="p">(</span><span class="n">attr_dtype</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">consts</span><span class="p">:</span>
+                    <span class="c1"># add attribute atom to body</span>
+                    <span class="n">new_atom</span> <span class="o">=</span> <span class="n">Atom</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">[</span><span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+                    <span class="n">new_body</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_atom</span><span class="p">]</span>
+                    <span class="n">new_clause</span> <span class="o">=</span> <span class="n">Clause</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="p">,</span> <span class="n">new_body</span><span class="p">)</span>
+                    <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_clause</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span></div>
+
+<div class="viewcode-block" id="RefinementGenerator.add_relation_atom"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.add_relation_atom">[docs]</a>    <span class="k">def</span> <span class="nf">add_relation_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_manager</span><span class="o">.</span><span class="n">get_relational_preds</span><span class="p">():</span>
+            <span class="n">var_candidates</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_vars</span><span class="p">()</span>
+            <span class="c1"># Select X_1, ..., X_n for new atom p(X_1, ..., X_n)</span>
+            <span class="c1"># 1. Selection 2. Ordering</span>
+            <span class="k">for</span> <span class="n">vs</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="n">var_candidates</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">arity</span><span class="p">):</span>
+                <span class="n">new_atom</span> <span class="o">=</span> <span class="n">Atom</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">vs</span><span class="p">)</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span>
+                <span class="k">if</span> <span class="n">new_atom</span> <span class="o">!=</span> <span class="n">head</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">new_atom</span> <span class="ow">in</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">):</span>
+                    <span class="n">new_body</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_atom</span><span class="p">]</span>
+                    <span class="n">new_clause</span> <span class="o">=</span> <span class="n">Clause</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">new_body</span><span class="p">)</span>
+                    <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_clause</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span></div>
+
+    <span class="k">def</span> <span class="nf">_add_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        add p(x_1, ..., x_n) to the body</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check body length</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_body_len</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">all_consts</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">preds</span><span class="p">:</span>
+            <span class="n">var_candidates</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_vars</span><span class="p">()</span>
+            <span class="c1"># Select X_1, ..., X_n for new atom p(X_1, ..., X_n)</span>
+            <span class="c1"># 1. Selection 2. Ordering</span>
+            <span class="k">for</span> <span class="n">vs</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="n">var_candidates</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">arity</span><span class="p">):</span>
+                <span class="n">new_atom</span> <span class="o">=</span> <span class="n">Atom</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">vs</span><span class="p">)</span>
+                <span class="n">head</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span>
+                <span class="k">if</span> <span class="n">new_atom</span> <span class="o">!=</span> <span class="n">head</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">new_atom</span> <span class="ow">in</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">):</span>
+                    <span class="n">new_body</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">body</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_atom</span><span class="p">]</span>
+                    <span class="n">new_clause</span> <span class="o">=</span> <span class="n">Clause</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">new_body</span><span class="p">)</span>
+                    <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_clause</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span>
+
+<div class="viewcode-block" id="RefinementGenerator.apply_func"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.apply_func">[docs]</a>    <span class="k">def</span> <span class="nf">apply_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        z/f(x_1, ..., x_n) for every variable in C and every n-ary function symbol f in the language</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_body_len</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">all_consts</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">funcs</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">all_funcs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">all_vars</span><span class="p">():</span>
+            <span class="c1"># for z in clause.all_vars():</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">funcs</span><span class="p">:</span>
+                <span class="c1"># if len(funcs) &gt;= 1 and not(f in funcs):</span>
+                <span class="c1">#    continue</span>
+
+                <span class="n">new_vars</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">var_gen</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+                            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">arity</span><span class="p">)]</span>
+                <span class="n">func_term</span> <span class="o">=</span> <span class="n">FuncTerm</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">new_vars</span><span class="p">)</span>
+                <span class="c1"># TODO: check variable z&#39;s depth</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">subs</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">func_term</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">max_depth</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span><span class="p">:</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">rename_vars</span><span class="p">()</span>
+                    <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span></div>
+
+<div class="viewcode-block" id="RefinementGenerator.subs_var"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.subs_var">[docs]</a>    <span class="k">def</span> <span class="nf">subs_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        z/x for every distinct variables x and z in C</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># to HEAD</span>
+        <span class="n">all_vars</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">all_vars</span><span class="p">()</span>
+        <span class="n">combs</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">all_vars</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">combs</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subs</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">rename_vars</span><span class="p">()</span>
+            <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span></div>
+
+<div class="viewcode-block" id="RefinementGenerator.subs_const"><a class="viewcode-back" href="../../src.html#src.refinement.RefinementGenerator.subs_const">[docs]</a>    <span class="k">def</span> <span class="nf">subs_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        z/a for every variable z in C and every constant a in the language</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_body_len</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">max_depth</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">refined_clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_vars</span> <span class="o">=</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">all_vars</span><span class="p">()</span>
+        <span class="n">consts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">subs_consts</span>
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">all_vars</span><span class="p">,</span> <span class="n">consts</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subs</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">rename_vars</span><span class="p">()</span>
+            <span class="n">refined_clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">refined_clauses</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

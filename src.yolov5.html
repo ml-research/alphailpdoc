@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.yolov5 package &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="src.yolov5.models package" href="src.yolov5.models.html" />
+    <link rel="prev" title="src.slot_attention package" href="src.slot_attention.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html">
+            <img src="_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="src.html">src package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="src.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="src.fol.html">src.fol package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.slot_attention.html">src.slot_attention package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">src.yolov5 package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-src.yolov5">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.clause_generator">src.clause_generator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.data_clevr">src.data_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.data_kandinsky">src.data_kandinsky module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.eval_clause_infer">src.eval_clause_infer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.facts_converter">src.facts_converter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.infer">src.infer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.logic_utils">src.logic_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.mode_declaration">src.mode_declaration module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.neural_utils">src.neural_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.nsfr">src.nsfr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.nsfr_utils">src.nsfr_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.optimizer">src.optimizer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.percept">src.percept module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.predict_clevr">src.predict_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.predict_kandinsky">src.predict_kandinsky module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.refinement">src.refinement module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.tensor_encoder">src.tensor_encoder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.torch_utils">src.torch_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.train">src.train module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.train_cnn">src.train_cnn module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.train_cnn_clevr">src.train_cnn_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.train_sa_mlp_clevr">src.train_sa_mlp_clevr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.train_yolo_mlp">src.train_yolo_mlp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.valuation">src.valuation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src.valuation_func">src.valuation_func module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.html#module-src">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="src.html">src package</a></li>
+      <li class="breadcrumb-item active">src.yolov5 package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/src.yolov5.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="src-yolov5-package">
+<h1>src.yolov5 package<a class="headerlink" href="#src-yolov5-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="src.yolov5.models.html">src.yolov5.models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.models.html#module-src.yolov5.models.common">src.yolov5.models.common module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape"><code class="docutils literal notranslate"><span class="pre">AutoShape</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.autoshape"><code class="docutils literal notranslate"><span class="pre">AutoShape.autoshape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.classes"><code class="docutils literal notranslate"><span class="pre">AutoShape.classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.conf"><code class="docutils literal notranslate"><span class="pre">AutoShape.conf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.forward"><code class="docutils literal notranslate"><span class="pre">AutoShape.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.iou"><code class="docutils literal notranslate"><span class="pre">AutoShape.iou</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.max_det"><code class="docutils literal notranslate"><span class="pre">AutoShape.max_det</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.AutoShape.training"><code class="docutils literal notranslate"><span class="pre">AutoShape.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Bottleneck"><code class="docutils literal notranslate"><span class="pre">Bottleneck</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Bottleneck.forward"><code class="docutils literal notranslate"><span class="pre">Bottleneck.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Bottleneck.training"><code class="docutils literal notranslate"><span class="pre">Bottleneck.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.BottleneckCSP"><code class="docutils literal notranslate"><span class="pre">BottleneckCSP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.BottleneckCSP.forward"><code class="docutils literal notranslate"><span class="pre">BottleneckCSP.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.BottleneckCSP.training"><code class="docutils literal notranslate"><span class="pre">BottleneckCSP.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.C3"><code class="docutils literal notranslate"><span class="pre">C3</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.C3.forward"><code class="docutils literal notranslate"><span class="pre">C3.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.C3.training"><code class="docutils literal notranslate"><span class="pre">C3.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.C3TR"><code class="docutils literal notranslate"><span class="pre">C3TR</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.C3TR.training"><code class="docutils literal notranslate"><span class="pre">C3TR.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Classify"><code class="docutils literal notranslate"><span class="pre">Classify</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Classify.forward"><code class="docutils literal notranslate"><span class="pre">Classify.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Classify.training"><code class="docutils literal notranslate"><span class="pre">Classify.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Concat"><code class="docutils literal notranslate"><span class="pre">Concat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Concat.forward"><code class="docutils literal notranslate"><span class="pre">Concat.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Concat.training"><code class="docutils literal notranslate"><span class="pre">Concat.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Contract"><code class="docutils literal notranslate"><span class="pre">Contract</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Contract.forward"><code class="docutils literal notranslate"><span class="pre">Contract.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Contract.training"><code class="docutils literal notranslate"><span class="pre">Contract.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Conv"><code class="docutils literal notranslate"><span class="pre">Conv</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Conv.forward"><code class="docutils literal notranslate"><span class="pre">Conv.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Conv.fuseforward"><code class="docutils literal notranslate"><span class="pre">Conv.fuseforward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Conv.training"><code class="docutils literal notranslate"><span class="pre">Conv.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.DWConv"><code class="docutils literal notranslate"><span class="pre">DWConv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections"><code class="docutils literal notranslate"><span class="pre">Detections</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.crop"><code class="docutils literal notranslate"><span class="pre">Detections.crop()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.display"><code class="docutils literal notranslate"><span class="pre">Detections.display()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.pandas"><code class="docutils literal notranslate"><span class="pre">Detections.pandas()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.print"><code class="docutils literal notranslate"><span class="pre">Detections.print()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.render"><code class="docutils literal notranslate"><span class="pre">Detections.render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.save"><code class="docutils literal notranslate"><span class="pre">Detections.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.show"><code class="docutils literal notranslate"><span class="pre">Detections.show()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Detections.tolist"><code class="docutils literal notranslate"><span class="pre">Detections.tolist()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Expand"><code class="docutils literal notranslate"><span class="pre">Expand</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Expand.forward"><code class="docutils literal notranslate"><span class="pre">Expand.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Expand.training"><code class="docutils literal notranslate"><span class="pre">Expand.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Focus"><code class="docutils literal notranslate"><span class="pre">Focus</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Focus.forward"><code class="docutils literal notranslate"><span class="pre">Focus.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.Focus.training"><code class="docutils literal notranslate"><span class="pre">Focus.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS"><code class="docutils literal notranslate"><span class="pre">NMS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS.classes"><code class="docutils literal notranslate"><span class="pre">NMS.classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS.conf"><code class="docutils literal notranslate"><span class="pre">NMS.conf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS.forward"><code class="docutils literal notranslate"><span class="pre">NMS.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS.iou"><code class="docutils literal notranslate"><span class="pre">NMS.iou</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS.max_det"><code class="docutils literal notranslate"><span class="pre">NMS.max_det</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.NMS.training"><code class="docutils literal notranslate"><span class="pre">NMS.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.SPP"><code class="docutils literal notranslate"><span class="pre">SPP</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.SPP.forward"><code class="docutils literal notranslate"><span class="pre">SPP.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.SPP.training"><code class="docutils literal notranslate"><span class="pre">SPP.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.TransformerBlock"><code class="docutils literal notranslate"><span class="pre">TransformerBlock</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.TransformerBlock.forward"><code class="docutils literal notranslate"><span class="pre">TransformerBlock.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.TransformerBlock.training"><code class="docutils literal notranslate"><span class="pre">TransformerBlock.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.TransformerLayer"><code class="docutils literal notranslate"><span class="pre">TransformerLayer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.TransformerLayer.forward"><code class="docutils literal notranslate"><span class="pre">TransformerLayer.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.TransformerLayer.training"><code class="docutils literal notranslate"><span class="pre">TransformerLayer.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.common.autopad"><code class="docutils literal notranslate"><span class="pre">autopad()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.models.html#module-src.yolov5.models.experimental">src.yolov5.models.experimental module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.CrossConv"><code class="docutils literal notranslate"><span class="pre">CrossConv</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.CrossConv.forward"><code class="docutils literal notranslate"><span class="pre">CrossConv.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.CrossConv.training"><code class="docutils literal notranslate"><span class="pre">CrossConv.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.Ensemble"><code class="docutils literal notranslate"><span class="pre">Ensemble</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.Ensemble.forward"><code class="docutils literal notranslate"><span class="pre">Ensemble.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.Ensemble.training"><code class="docutils literal notranslate"><span class="pre">Ensemble.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.GhostBottleneck"><code class="docutils literal notranslate"><span class="pre">GhostBottleneck</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.GhostBottleneck.forward"><code class="docutils literal notranslate"><span class="pre">GhostBottleneck.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.GhostBottleneck.training"><code class="docutils literal notranslate"><span class="pre">GhostBottleneck.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.GhostConv"><code class="docutils literal notranslate"><span class="pre">GhostConv</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.GhostConv.forward"><code class="docutils literal notranslate"><span class="pre">GhostConv.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.GhostConv.training"><code class="docutils literal notranslate"><span class="pre">GhostConv.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.MixConv2d"><code class="docutils literal notranslate"><span class="pre">MixConv2d</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.MixConv2d.forward"><code class="docutils literal notranslate"><span class="pre">MixConv2d.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.MixConv2d.training"><code class="docutils literal notranslate"><span class="pre">MixConv2d.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.Sum"><code class="docutils literal notranslate"><span class="pre">Sum</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.Sum.forward"><code class="docutils literal notranslate"><span class="pre">Sum.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.Sum.training"><code class="docutils literal notranslate"><span class="pre">Sum.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.experimental.attempt_load"><code class="docutils literal notranslate"><span class="pre">attempt_load()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.models.html#module-src.yolov5.models.export">src.yolov5.models.export module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.models.html#module-src.yolov5.models.yolo">src.yolov5.models.yolo module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Detect"><code class="docutils literal notranslate"><span class="pre">Detect</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Detect.forward"><code class="docutils literal notranslate"><span class="pre">Detect.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Detect.onnx_dynamic"><code class="docutils literal notranslate"><span class="pre">Detect.onnx_dynamic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Detect.stride"><code class="docutils literal notranslate"><span class="pre">Detect.stride</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Detect.training"><code class="docutils literal notranslate"><span class="pre">Detect.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.autoshape"><code class="docutils literal notranslate"><span class="pre">Model.autoshape()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.forward"><code class="docutils literal notranslate"><span class="pre">Model.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.forward_augment"><code class="docutils literal notranslate"><span class="pre">Model.forward_augment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.forward_once"><code class="docutils literal notranslate"><span class="pre">Model.forward_once()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.fuse"><code class="docutils literal notranslate"><span class="pre">Model.fuse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.info"><code class="docutils literal notranslate"><span class="pre">Model.info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.nms"><code class="docutils literal notranslate"><span class="pre">Model.nms()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.Model.training"><code class="docutils literal notranslate"><span class="pre">Model.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.models.html#src.yolov5.models.yolo.parse_model"><code class="docutils literal notranslate"><span class="pre">parse_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.models.html#module-src.yolov5.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="src.yolov5.utils.html">src.yolov5.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.aws.html">src.yolov5.utils.aws package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.aws.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.aws.html#module-src.yolov5.utils.aws.resume">src.yolov5.utils.aws.resume module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.aws.html#module-src.yolov5.utils.aws">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.wandb_logging.html">src.yolov5.utils.wandb_logging package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.wandb_logging.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.wandb_logging.html#src-yolov5-utils-wandb-logging-log-dataset-module">src.yolov5.utils.wandb_logging.log_dataset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.wandb_logging.html#module-src.yolov5.utils.wandb_logging.wandb_utils">src.yolov5.utils.wandb_logging.wandb_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.wandb_logging.html#module-src.yolov5.utils.wandb_logging">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.activations">src.yolov5.utils.activations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.AconC"><code class="docutils literal notranslate"><span class="pre">AconC</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.AconC.forward"><code class="docutils literal notranslate"><span class="pre">AconC.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.AconC.training"><code class="docutils literal notranslate"><span class="pre">AconC.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.FReLU"><code class="docutils literal notranslate"><span class="pre">FReLU</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.FReLU.forward"><code class="docutils literal notranslate"><span class="pre">FReLU.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.FReLU.training"><code class="docutils literal notranslate"><span class="pre">FReLU.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.Hardswish"><code class="docutils literal notranslate"><span class="pre">Hardswish</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.Hardswish.forward"><code class="docutils literal notranslate"><span class="pre">Hardswish.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.Hardswish.training"><code class="docutils literal notranslate"><span class="pre">Hardswish.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MemoryEfficientMish"><code class="docutils literal notranslate"><span class="pre">MemoryEfficientMish</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MemoryEfficientMish.F"><code class="docutils literal notranslate"><span class="pre">MemoryEfficientMish.F</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MemoryEfficientMish.forward"><code class="docutils literal notranslate"><span class="pre">MemoryEfficientMish.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MemoryEfficientMish.training"><code class="docutils literal notranslate"><span class="pre">MemoryEfficientMish.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MetaAconC"><code class="docutils literal notranslate"><span class="pre">MetaAconC</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MetaAconC.forward"><code class="docutils literal notranslate"><span class="pre">MetaAconC.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.MetaAconC.training"><code class="docutils literal notranslate"><span class="pre">MetaAconC.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.Mish"><code class="docutils literal notranslate"><span class="pre">Mish</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.Mish.forward"><code class="docutils literal notranslate"><span class="pre">Mish.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.Mish.training"><code class="docutils literal notranslate"><span class="pre">Mish.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.SiLU"><code class="docutils literal notranslate"><span class="pre">SiLU</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.SiLU.forward"><code class="docutils literal notranslate"><span class="pre">SiLU.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.activations.SiLU.training"><code class="docutils literal notranslate"><span class="pre">SiLU.training</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.autoanchor">src.yolov5.utils.autoanchor module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.autoanchor.check_anchor_order"><code class="docutils literal notranslate"><span class="pre">check_anchor_order()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.autoanchor.check_anchors"><code class="docutils literal notranslate"><span class="pre">check_anchors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.autoanchor.kmean_anchors"><code class="docutils literal notranslate"><span class="pre">kmean_anchors()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.datasets">src.yolov5.utils.datasets module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.batch_size"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.batch_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.dataset"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.dataset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.drop_last"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.drop_last</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.num_workers"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.num_workers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.pin_memory"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.pin_memory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.prefetch_factor"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.prefetch_factor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.sampler"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.sampler</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.InfiniteDataLoader.timeout"><code class="docutils literal notranslate"><span class="pre">InfiniteDataLoader.timeout</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadImages"><code class="docutils literal notranslate"><span class="pre">LoadImages</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadImages.new_video"><code class="docutils literal notranslate"><span class="pre">LoadImages.new_video()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadImagesAndLabels"><code class="docutils literal notranslate"><span class="pre">LoadImagesAndLabels</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadImagesAndLabels.cache_labels"><code class="docutils literal notranslate"><span class="pre">LoadImagesAndLabels.cache_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadImagesAndLabels.collate_fn"><code class="docutils literal notranslate"><span class="pre">LoadImagesAndLabels.collate_fn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadImagesAndLabels.collate_fn4"><code class="docutils literal notranslate"><span class="pre">LoadImagesAndLabels.collate_fn4()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadStreams"><code class="docutils literal notranslate"><span class="pre">LoadStreams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadStreams.update"><code class="docutils literal notranslate"><span class="pre">LoadStreams.update()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.LoadWebcam"><code class="docutils literal notranslate"><span class="pre">LoadWebcam</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.augment_hsv"><code class="docutils literal notranslate"><span class="pre">augment_hsv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.autosplit"><code class="docutils literal notranslate"><span class="pre">autosplit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.box_candidates"><code class="docutils literal notranslate"><span class="pre">box_candidates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.create_dataloader"><code class="docutils literal notranslate"><span class="pre">create_dataloader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.create_folder"><code class="docutils literal notranslate"><span class="pre">create_folder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.cutout"><code class="docutils literal notranslate"><span class="pre">cutout()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.exif_size"><code class="docutils literal notranslate"><span class="pre">exif_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.extract_boxes"><code class="docutils literal notranslate"><span class="pre">extract_boxes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.flatten_recursive"><code class="docutils literal notranslate"><span class="pre">flatten_recursive()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.get_hash"><code class="docutils literal notranslate"><span class="pre">get_hash()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.hist_equalize"><code class="docutils literal notranslate"><span class="pre">hist_equalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.img2label_paths"><code class="docutils literal notranslate"><span class="pre">img2label_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.letterbox"><code class="docutils literal notranslate"><span class="pre">letterbox()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.load_image"><code class="docutils literal notranslate"><span class="pre">load_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.load_mosaic"><code class="docutils literal notranslate"><span class="pre">load_mosaic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.load_mosaic9"><code class="docutils literal notranslate"><span class="pre">load_mosaic9()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.random_perspective"><code class="docutils literal notranslate"><span class="pre">random_perspective()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.datasets.replicate"><code class="docutils literal notranslate"><span class="pre">replicate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.general">src.yolov5.utils.general module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.apply_classifier"><code class="docutils literal notranslate"><span class="pre">apply_classifier()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.bbox_iou"><code class="docutils literal notranslate"><span class="pre">bbox_iou()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.box_iou"><code class="docutils literal notranslate"><span class="pre">box_iou()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_dataset"><code class="docutils literal notranslate"><span class="pre">check_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_file"><code class="docutils literal notranslate"><span class="pre">check_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_git_status"><code class="docutils literal notranslate"><span class="pre">check_git_status()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_img_size"><code class="docutils literal notranslate"><span class="pre">check_img_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_imshow"><code class="docutils literal notranslate"><span class="pre">check_imshow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_online"><code class="docutils literal notranslate"><span class="pre">check_online()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_python"><code class="docutils literal notranslate"><span class="pre">check_python()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.check_requirements"><code class="docutils literal notranslate"><span class="pre">check_requirements()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.clean_str"><code class="docutils literal notranslate"><span class="pre">clean_str()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.clip_coords"><code class="docutils literal notranslate"><span class="pre">clip_coords()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.coco80_to_coco91_class"><code class="docutils literal notranslate"><span class="pre">coco80_to_coco91_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.colorstr"><code class="docutils literal notranslate"><span class="pre">colorstr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.download"><code class="docutils literal notranslate"><span class="pre">download()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.emojis"><code class="docutils literal notranslate"><span class="pre">emojis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.file_size"><code class="docutils literal notranslate"><span class="pre">file_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.get_latest_run"><code class="docutils literal notranslate"><span class="pre">get_latest_run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.increment_path"><code class="docutils literal notranslate"><span class="pre">increment_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.init_seeds"><code class="docutils literal notranslate"><span class="pre">init_seeds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.is_colab"><code class="docutils literal notranslate"><span class="pre">is_colab()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.is_docker"><code class="docutils literal notranslate"><span class="pre">is_docker()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.labels_to_class_weights"><code class="docutils literal notranslate"><span class="pre">labels_to_class_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.labels_to_image_weights"><code class="docutils literal notranslate"><span class="pre">labels_to_image_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.make_divisible"><code class="docutils literal notranslate"><span class="pre">make_divisible()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.non_max_suppression"><code class="docutils literal notranslate"><span class="pre">non_max_suppression()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.one_cycle"><code class="docutils literal notranslate"><span class="pre">one_cycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.print_mutation"><code class="docutils literal notranslate"><span class="pre">print_mutation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.resample_segments"><code class="docutils literal notranslate"><span class="pre">resample_segments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.save_one_box"><code class="docutils literal notranslate"><span class="pre">save_one_box()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.scale_coords"><code class="docutils literal notranslate"><span class="pre">scale_coords()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.segment2box"><code class="docutils literal notranslate"><span class="pre">segment2box()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.segments2boxes"><code class="docutils literal notranslate"><span class="pre">segments2boxes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.set_logging"><code class="docutils literal notranslate"><span class="pre">set_logging()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.strip_optimizer"><code class="docutils literal notranslate"><span class="pre">strip_optimizer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.wh_iou"><code class="docutils literal notranslate"><span class="pre">wh_iou()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.xyn2xy"><code class="docutils literal notranslate"><span class="pre">xyn2xy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.xywh2xyxy"><code class="docutils literal notranslate"><span class="pre">xywh2xyxy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.xywhn2xyxy"><code class="docutils literal notranslate"><span class="pre">xywhn2xyxy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.general.xyxy2xywh"><code class="docutils literal notranslate"><span class="pre">xyxy2xywh()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.google_utils">src.yolov5.utils.google_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.google_utils.attempt_download"><code class="docutils literal notranslate"><span class="pre">attempt_download()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.google_utils.gdrive_download"><code class="docutils literal notranslate"><span class="pre">gdrive_download()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.google_utils.get_token"><code class="docutils literal notranslate"><span class="pre">get_token()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.google_utils.gsutil_getsize"><code class="docutils literal notranslate"><span class="pre">gsutil_getsize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.google_utils.safe_download"><code class="docutils literal notranslate"><span class="pre">safe_download()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.loss">src.yolov5.utils.loss module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.BCEBlurWithLogitsLoss"><code class="docutils literal notranslate"><span class="pre">BCEBlurWithLogitsLoss</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.BCEBlurWithLogitsLoss.forward"><code class="docutils literal notranslate"><span class="pre">BCEBlurWithLogitsLoss.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.BCEBlurWithLogitsLoss.training"><code class="docutils literal notranslate"><span class="pre">BCEBlurWithLogitsLoss.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.ComputeLoss"><code class="docutils literal notranslate"><span class="pre">ComputeLoss</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.ComputeLoss.build_targets"><code class="docutils literal notranslate"><span class="pre">ComputeLoss.build_targets()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.FocalLoss"><code class="docutils literal notranslate"><span class="pre">FocalLoss</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.FocalLoss.forward"><code class="docutils literal notranslate"><span class="pre">FocalLoss.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.FocalLoss.training"><code class="docutils literal notranslate"><span class="pre">FocalLoss.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.QFocalLoss"><code class="docutils literal notranslate"><span class="pre">QFocalLoss</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.QFocalLoss.forward"><code class="docutils literal notranslate"><span class="pre">QFocalLoss.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.QFocalLoss.training"><code class="docutils literal notranslate"><span class="pre">QFocalLoss.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.loss.smooth_BCE"><code class="docutils literal notranslate"><span class="pre">smooth_BCE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.metrics">src.yolov5.utils.metrics module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.ConfusionMatrix"><code class="docutils literal notranslate"><span class="pre">ConfusionMatrix</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.ConfusionMatrix.matrix"><code class="docutils literal notranslate"><span class="pre">ConfusionMatrix.matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.ConfusionMatrix.plot"><code class="docutils literal notranslate"><span class="pre">ConfusionMatrix.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.ConfusionMatrix.print"><code class="docutils literal notranslate"><span class="pre">ConfusionMatrix.print()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.ConfusionMatrix.process_batch"><code class="docutils literal notranslate"><span class="pre">ConfusionMatrix.process_batch()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.ap_per_class"><code class="docutils literal notranslate"><span class="pre">ap_per_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.compute_ap"><code class="docutils literal notranslate"><span class="pre">compute_ap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.fitness"><code class="docutils literal notranslate"><span class="pre">fitness()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.plot_mc_curve"><code class="docutils literal notranslate"><span class="pre">plot_mc_curve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.metrics.plot_pr_curve"><code class="docutils literal notranslate"><span class="pre">plot_pr_curve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.plots">src.yolov5.utils.plots module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.Colors"><code class="docutils literal notranslate"><span class="pre">Colors</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.Colors.hex2rgb"><code class="docutils literal notranslate"><span class="pre">Colors.hex2rgb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.butter_lowpass_filtfilt"><code class="docutils literal notranslate"><span class="pre">butter_lowpass_filtfilt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.hist2d"><code class="docutils literal notranslate"><span class="pre">hist2d()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.output_to_target"><code class="docutils literal notranslate"><span class="pre">output_to_target()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_evolution"><code class="docutils literal notranslate"><span class="pre">plot_evolution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_images"><code class="docutils literal notranslate"><span class="pre">plot_images()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_labels"><code class="docutils literal notranslate"><span class="pre">plot_labels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_lr_scheduler"><code class="docutils literal notranslate"><span class="pre">plot_lr_scheduler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_one_box"><code class="docutils literal notranslate"><span class="pre">plot_one_box()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_one_box_PIL"><code class="docutils literal notranslate"><span class="pre">plot_one_box_PIL()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_results"><code class="docutils literal notranslate"><span class="pre">plot_results()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_results_overlay"><code class="docutils literal notranslate"><span class="pre">plot_results_overlay()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_study_txt"><code class="docutils literal notranslate"><span class="pre">plot_study_txt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_targets_txt"><code class="docutils literal notranslate"><span class="pre">plot_targets_txt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_test_txt"><code class="docutils literal notranslate"><span class="pre">plot_test_txt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.plot_wh_methods"><code class="docutils literal notranslate"><span class="pre">plot_wh_methods()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.plots.profile_idetection"><code class="docutils literal notranslate"><span class="pre">profile_idetection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils.torch_utils">src.yolov5.utils.torch_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.ModelEMA"><code class="docutils literal notranslate"><span class="pre">ModelEMA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.ModelEMA.update"><code class="docutils literal notranslate"><span class="pre">ModelEMA.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.ModelEMA.update_attr"><code class="docutils literal notranslate"><span class="pre">ModelEMA.update_attr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.copy_attr"><code class="docutils literal notranslate"><span class="pre">copy_attr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.date_modified"><code class="docutils literal notranslate"><span class="pre">date_modified()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.de_parallel"><code class="docutils literal notranslate"><span class="pre">de_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.find_modules"><code class="docutils literal notranslate"><span class="pre">find_modules()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.fuse_conv_and_bn"><code class="docutils literal notranslate"><span class="pre">fuse_conv_and_bn()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.git_describe"><code class="docutils literal notranslate"><span class="pre">git_describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.init_torch_seeds"><code class="docutils literal notranslate"><span class="pre">init_torch_seeds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.initialize_weights"><code class="docutils literal notranslate"><span class="pre">initialize_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.intersect_dicts"><code class="docutils literal notranslate"><span class="pre">intersect_dicts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.is_parallel"><code class="docutils literal notranslate"><span class="pre">is_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.load_classifier"><code class="docutils literal notranslate"><span class="pre">load_classifier()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.model_info"><code class="docutils literal notranslate"><span class="pre">model_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.profile"><code class="docutils literal notranslate"><span class="pre">profile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.prune"><code class="docutils literal notranslate"><span class="pre">prune()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.scale_img"><code class="docutils literal notranslate"><span class="pre">scale_img()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.select_device"><code class="docutils literal notranslate"><span class="pre">select_device()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.sparsity"><code class="docutils literal notranslate"><span class="pre">sparsity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.time_synchronized"><code class="docutils literal notranslate"><span class="pre">time_synchronized()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="src.yolov5.utils.html#src.yolov5.utils.torch_utils.torch_distributed_zero_first"><code class="docutils literal notranslate"><span class="pre">torch_distributed_zero_first()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="src.yolov5.utils.html#module-src.yolov5.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-src.yolov5">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src.yolov5" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="src.slot_attention.html" class="btn btn-neutral float-left" title="src.slot_attention package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="src.yolov5.models.html" class="btn btn-neutral float-right" title="src.yolov5.models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.yolov5.utils.torch_utils &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html">
+            <img src="../../../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.yolov5.utils.torch_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.yolov5.utils.torch_utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># YOLOv5 PyTorch utils</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.backends.cudnn</span> <span class="k">as</span> <span class="nn">cudnn</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">thop</span>  <span class="c1"># for FLOPS computation</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">thop</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="torch_distributed_zero_first"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.torch_distributed_zero_first">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">torch_distributed_zero_first</span><span class="p">(</span><span class="n">local_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator to make all processes in distributed training wait for each local_master to do something.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">local_rank</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span>
+    <span class="k">yield</span>
+    <span class="k">if</span> <span class="n">local_rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="init_torch_seeds"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.init_torch_seeds">[docs]</a><span class="k">def</span> <span class="nf">init_torch_seeds</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="c1"># Speed-reproducibility tradeoff https://pytorch.org/docs/stable/notes/randomness.html</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># slower, more reproducible</span>
+        <span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">cudnn</span><span class="o">.</span><span class="n">deterministic</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># faster, less reproducible</span>
+        <span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark</span><span class="p">,</span> <span class="n">cudnn</span><span class="o">.</span><span class="n">deterministic</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="date_modified"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.date_modified">[docs]</a><span class="k">def</span> <span class="nf">date_modified</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="vm">__file__</span><span class="p">):</span>
+    <span class="c1"># return human-readable file modification date, i.e. &#39;2021-3-26&#39;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">year</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">month</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">day</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="git_describe"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.git_describe">[docs]</a><span class="k">def</span> <span class="nf">git_describe</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">):</span>  <span class="c1"># path must be a directory</span>
+    <span class="c1"># return human-readable git description, i.e. v5.0-5-g3e25f1e https://git-scm.com/docs/git-describe</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;git -C </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1"> describe --tags --long --always&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># not a git repository</span></div>
+
+
+<div class="viewcode-block" id="select_device"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.select_device">[docs]</a><span class="k">def</span> <span class="nf">select_device</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># device = &#39;cpu&#39; or &#39;0&#39; or &#39;0,1,2,3&#39;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;YOLOv5 🚀 </span><span class="si">{</span><span class="n">git_describe</span><span class="p">()</span> <span class="ow">or</span> <span class="n">date_modified</span><span class="p">()</span><span class="si">}</span><span class="s1"> torch </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s1"> &#39;</span>  <span class="c1"># string</span>
+    <span class="n">cpu</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span>
+    <span class="k">if</span> <span class="n">cpu</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;-1&#39;</span>  <span class="c1"># force torch.cuda.is_available() = False</span>
+    <span class="k">elif</span> <span class="n">device</span><span class="p">:</span>  <span class="c1"># non-cpu device requested</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">device</span>  <span class="c1"># set environment variable</span>
+        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">(),</span> <span class="sa">f</span><span class="s1">&#39;CUDA unavailable, invalid device </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s1"> requested&#39;</span>  <span class="c1"># check availability</span>
+
+    <span class="n">cuda</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">cpu</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">cuda</span><span class="p">:</span>
+        <span class="n">devices</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">device</span> <span class="k">else</span> <span class="nb">range</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">())</span>  <span class="c1"># i.e. 0,1,6,7</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span>  <span class="c1"># device count</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">batch_size</span><span class="p">:</span>  <span class="c1"># check batch_size is divisible by device_count</span>
+            <span class="k">assert</span> <span class="n">batch_size</span> <span class="o">%</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;batch-size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s1"> not multiple of GPU count </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">space</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">devices</span><span class="p">):</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_properties</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">space</span><span class="si">}</span><span class="s2">CUDA:</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">total_memory</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">**</span> <span class="mi">2</span><span class="si">}</span><span class="s2">MB)</span><span class="se">\n</span><span class="s2">&quot;</span>  <span class="c1"># bytes to MB</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;CPU</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span> <span class="k">else</span> <span class="n">s</span><span class="p">)</span>  <span class="c1"># emoji-safe</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span> <span class="k">if</span> <span class="n">cuda</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="time_synchronized"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.time_synchronized">[docs]</a><span class="k">def</span> <span class="nf">time_synchronized</span><span class="p">():</span>
+    <span class="c1"># pytorch-accurate time</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="profile"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.profile">[docs]</a><span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ops</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># profile a pytorch module or list of modules. Example usage:</span>
+    <span class="c1">#     x = torch.randn(16, 3, 640, 640)  # input</span>
+    <span class="c1">#     m1 = lambda x: x * torch.sigmoid(x)</span>
+    <span class="c1">#     m2 = nn.SiLU()</span>
+    <span class="c1">#     profile(x, [m1, m2], n=100)  # profile speed over 100 iterations</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="n">device</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_properties</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;cuda&#39;</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;Params&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}{</span><span class="s1">&#39;GFLOPS&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}{</span><span class="s1">&#39;forward (ms)&#39;</span><span class="si">:</span><span class="s2">&gt;16s</span><span class="si">}{</span><span class="s1">&#39;backward (ms)&#39;</span><span class="si">:</span><span class="s2">&gt;16s</span><span class="si">}{</span><span class="s1">&#39;input&#39;</span><span class="si">:</span><span class="s2">&gt;24s</span><span class="si">}{</span><span class="s1">&#39;output&#39;</span><span class="si">:</span><span class="s2">&gt;24s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ops</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">ops</span><span class="p">]:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">&#39;to&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">m</span>  <span class="c1"># device</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">half</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">&#39;half&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">is</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span> <span class="k">else</span> <span class="n">m</span>  <span class="c1"># type</span>
+        <span class="n">dtf</span><span class="p">,</span> <span class="n">dtb</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]</span>  <span class="c1"># dt forward, backward</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">flops</span> <span class="o">=</span> <span class="n">thop</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,),</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1E9</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># GFLOPS</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">flops</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_synchronized</span><span class="p">()</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">m</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_synchronized</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+                <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_synchronized</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>  <span class="c1"># no backward method</span>
+                <span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
+            <span class="n">dtf</span> <span class="o">+=</span> <span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># ms per op forward</span>
+            <span class="n">dtb</span> <span class="o">+=</span> <span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># ms per op backward</span>
+
+        <span class="n">s_in</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;list&#39;</span>
+        <span class="n">s_out</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;list&#39;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">parameters</span><span class="p">()))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>  <span class="c1"># parameters</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="si">:</span><span class="s1">12</span><span class="si">}{</span><span class="n">flops</span><span class="si">:</span><span class="s1">12.4g</span><span class="si">}{</span><span class="n">dtf</span><span class="si">:</span><span class="s1">16.4g</span><span class="si">}{</span><span class="n">dtb</span><span class="si">:</span><span class="s1">16.4g</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="n">s_in</span><span class="p">)</span><span class="si">:</span><span class="s1">&gt;24s</span><span class="si">}{</span><span class="nb">str</span><span class="p">(</span><span class="n">s_out</span><span class="p">)</span><span class="si">:</span><span class="s1">&gt;24s</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_parallel"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.is_parallel">[docs]</a><span class="k">def</span> <span class="nf">is_parallel</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="c1"># Returns True if model is of type DP or DDP</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">parallel</span><span class="o">.</span><span class="n">DataParallel</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">parallel</span><span class="o">.</span><span class="n">DistributedDataParallel</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="de_parallel"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.de_parallel">[docs]</a><span class="k">def</span> <span class="nf">de_parallel</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="c1"># De-parallelize a model: returns single-GPU model if model is of type DP or DDP</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="n">is_parallel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="intersect_dicts"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.intersect_dicts">[docs]</a><span class="k">def</span> <span class="nf">intersect_dicts</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">()):</span>
+    <span class="c1"># Dictionary intersection of matching keys and shapes, omitting &#39;exclude&#39; keys, using da values</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">db</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">k</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">db</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="initialize_weights"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.initialize_weights">[docs]</a><span class="k">def</span> <span class="nf">initialize_weights</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># nn.init.kaiming_normal_(m.weight, mode=&#39;fan_out&#39;, nonlinearity=&#39;relu&#39;)</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="ow">is</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-3</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">momentum</span> <span class="o">=</span> <span class="mf">0.03</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Hardswish</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">LeakyReLU</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">ReLU6</span><span class="p">]:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="find_modules"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.find_modules">[docs]</a><span class="k">def</span> <span class="nf">find_modules</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">mclass</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
+    <span class="c1"># Finds layer indices matching module class &#39;mclass&#39;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">module_list</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">mclass</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="sparsity"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.sparsity">[docs]</a><span class="k">def</span> <span class="nf">sparsity</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="c1"># Return global model sparsity</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+        <span class="n">a</span> <span class="o">+=</span> <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+        <span class="n">b</span> <span class="o">+=</span> <span class="p">(</span><span class="n">p</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">b</span> <span class="o">/</span> <span class="n">a</span></div>
+
+
+<div class="viewcode-block" id="prune"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.prune">[docs]</a><span class="k">def</span> <span class="nf">prune</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+    <span class="c1"># Prune model to requested global sparsity</span>
+    <span class="kn">import</span> <span class="nn">torch.nn.utils.prune</span> <span class="k">as</span> <span class="nn">prune</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Pruning model... &#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
+            <span class="n">prune</span><span class="o">.</span><span class="n">l1_unstructured</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;weight&#39;</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="n">amount</span><span class="p">)</span>  <span class="c1"># prune</span>
+            <span class="n">prune</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">)</span>  <span class="c1"># make permanent</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">%.3g</span><span class="s1"> global sparsity&#39;</span> <span class="o">%</span> <span class="n">sparsity</span><span class="p">(</span><span class="n">model</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="fuse_conv_and_bn"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.fuse_conv_and_bn">[docs]</a><span class="k">def</span> <span class="nf">fuse_conv_and_bn</span><span class="p">(</span><span class="n">conv</span><span class="p">,</span> <span class="n">bn</span><span class="p">):</span>
+    <span class="c1"># Fuse convolution and batchnorm layers https://tehnokv.com/posts/fusing-batchnorm-and-conv/</span>
+    <span class="n">fusedconv</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="n">conv</span><span class="o">.</span><span class="n">in_channels</span><span class="p">,</span>
+                          <span class="n">conv</span><span class="o">.</span><span class="n">out_channels</span><span class="p">,</span>
+                          <span class="n">kernel_size</span><span class="o">=</span><span class="n">conv</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">,</span>
+                          <span class="n">stride</span><span class="o">=</span><span class="n">conv</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span>
+                          <span class="n">padding</span><span class="o">=</span><span class="n">conv</span><span class="o">.</span><span class="n">padding</span><span class="p">,</span>
+                          <span class="n">groups</span><span class="o">=</span><span class="n">conv</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span>
+                          <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">conv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># prepare filters</span>
+    <span class="n">w_conv</span> <span class="o">=</span> <span class="n">conv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">conv</span><span class="o">.</span><span class="n">out_channels</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">w_bn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">eps</span> <span class="o">+</span> <span class="n">bn</span><span class="o">.</span><span class="n">running_var</span><span class="p">)))</span>
+    <span class="n">fusedconv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">w_bn</span><span class="p">,</span> <span class="n">w_conv</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">fusedconv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="c1"># prepare spatial bias</span>
+    <span class="n">b_conv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">conv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">conv</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">if</span> <span class="n">conv</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">conv</span><span class="o">.</span><span class="n">bias</span>
+    <span class="n">b_bn</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">bias</span> <span class="o">-</span> <span class="n">bn</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">running_mean</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">running_var</span> <span class="o">+</span> <span class="n">bn</span><span class="o">.</span><span class="n">eps</span><span class="p">))</span>
+    <span class="n">fusedconv</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">w_bn</span><span class="p">,</span> <span class="n">b_conv</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b_bn</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fusedconv</span></div>
+
+
+<div class="viewcode-block" id="model_info"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.model_info">[docs]</a><span class="k">def</span> <span class="nf">model_info</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="mi">640</span><span class="p">):</span>
+    <span class="c1"># Model information. img_size may be int or list, i.e. img_size=640 or img_size=[640, 320]</span>
+    <span class="n">n_p</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>  <span class="c1"># number parameters</span>
+    <span class="n">n_g</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>  <span class="c1"># number gradients</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%5s</span><span class="s1"> </span><span class="si">%40s</span><span class="s1"> </span><span class="si">%9s</span><span class="s1"> </span><span class="si">%12s</span><span class="s1"> </span><span class="si">%20s</span><span class="s1"> </span><span class="si">%10s</span><span class="s1"> </span><span class="si">%10s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;layer&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;gradient&#39;</span><span class="p">,</span> <span class="s1">&#39;parameters&#39;</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">,</span> <span class="s1">&#39;mu&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;module_list.&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%5g</span><span class="s1"> </span><span class="si">%40s</span><span class="s1"> </span><span class="si">%9s</span><span class="s1"> </span><span class="si">%12g</span><span class="s1"> </span><span class="si">%20s</span><span class="s1"> </span><span class="si">%10.3g</span><span class="s1"> </span><span class="si">%10.3g</span><span class="s1">&#39;</span> <span class="o">%</span>
+                  <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">p</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">p</span><span class="o">.</span><span class="n">std</span><span class="p">()))</span>
+
+    <span class="k">try</span><span class="p">:</span>  <span class="c1"># FLOPS</span>
+        <span class="kn">from</span> <span class="nn">thop</span> <span class="kn">import</span> <span class="n">profile</span>
+        <span class="n">stride</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">stride</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="mi">32</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;stride&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">32</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">yaml</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ch&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">stride</span><span class="p">,</span> <span class="n">stride</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># input</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">profile</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">),</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">img</span><span class="p">,),</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1E9</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># stride GFLOPS</span>
+        <span class="n">img_size</span> <span class="o">=</span> <span class="n">img_size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">img_size</span><span class="p">,</span> <span class="n">img_size</span><span class="p">]</span>  <span class="c1"># expand if int/float</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="s1">&#39;, </span><span class="si">%.1f</span><span class="s1"> GFLOPS&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">flops</span> <span class="o">*</span> <span class="n">img_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">stride</span> <span class="o">*</span> <span class="n">img_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">stride</span><span class="p">)</span>  <span class="c1"># 640x640 GFLOPS</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model Summary: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">modules</span><span class="p">()))</span><span class="si">}</span><span class="s2"> layers, </span><span class="si">{</span><span class="n">n_p</span><span class="si">}</span><span class="s2"> parameters, </span><span class="si">{</span><span class="n">n_g</span><span class="si">}</span><span class="s2"> gradients</span><span class="si">{</span><span class="n">fs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_classifier"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.load_classifier">[docs]</a><span class="k">def</span> <span class="nf">load_classifier</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;resnet101&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="c1"># Loads a pretrained model reshaped to n-class output</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">](</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># ResNet model properties</span>
+    <span class="c1"># input_size = [3, 224, 224]</span>
+    <span class="c1"># input_space = &#39;RGB&#39;</span>
+    <span class="c1"># input_range = [0, 1]</span>
+    <span class="c1"># mean = [0.485, 0.456, 0.406]</span>
+    <span class="c1"># std = [0.229, 0.224, 0.225]</span>
+
+    <span class="c1"># Reshape output to n classes</span>
+    <span class="n">filters</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fc</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fc</span><span class="o">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fc</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">filters</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fc</span><span class="o">.</span><span class="n">out_features</span> <span class="o">=</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="scale_img"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.scale_img">[docs]</a><span class="k">def</span> <span class="nf">scale_img</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">same_shape</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">gs</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>  <span class="c1"># img(16,3,256,416)</span>
+    <span class="c1"># scales img(bs,3,y,x) by ratio constrained to gs-multiple</span>
+    <span class="k">if</span> <span class="n">ratio</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">img</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">))</span>  <span class="c1"># new size</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># resize</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">same_shape</span><span class="p">:</span>  <span class="c1"># pad/crop img</span>
+            <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">ratio</span> <span class="o">/</span> <span class="n">gs</span><span class="p">)</span> <span class="o">*</span> <span class="n">gs</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">w</span> <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">h</span> <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.447</span><span class="p">)</span>  <span class="c1"># value = imagenet mean</span></div>
+
+
+<div class="viewcode-block" id="copy_attr"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.copy_attr">[docs]</a><span class="k">def</span> <span class="nf">copy_attr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="p">(),</span> <span class="n">exclude</span><span class="o">=</span><span class="p">()):</span>
+    <span class="c1"># Copy attributes from b to a, options to only include [...] and to exclude [...]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">b</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">include</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">include</span><span class="p">)</span> <span class="ow">or</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ModelEMA"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.ModelEMA">[docs]</a><span class="k">class</span> <span class="nc">ModelEMA</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Model Exponential Moving Average from https://github.com/rwightman/pytorch-image-models</span>
+<span class="sd">    Keep a moving average of everything in the model state_dict (parameters and buffers).</span>
+<span class="sd">    This is intended to allow functionality like</span>
+<span class="sd">    https://www.tensorflow.org/api_docs/python/tf/train/ExponentialMovingAverage</span>
+<span class="sd">    A smoothed version of the weights is necessary for some training schemes to perform well.</span>
+<span class="sd">    This class is sensitive where it is initialized in the sequence of model init,</span>
+<span class="sd">    GPU assignment and distributed training wrappers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.9999</span><span class="p">,</span> <span class="n">updates</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="c1"># Create EMA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ema</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">module</span> <span class="k">if</span> <span class="n">is_parallel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># FP32 EMA</span>
+        <span class="c1"># if next(model.parameters()).device.type != &#39;cpu&#39;:</span>
+        <span class="c1">#     self.ema.half()  # FP16 EMA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="n">updates</span>  <span class="c1"># number of EMA updates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decay</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">decay</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2000</span><span class="p">))</span>  <span class="c1"># decay exponential ramp (to help early epochs)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ema</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ModelEMA.update"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.ModelEMA.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="c1"># Update EMA parameters</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">)</span>
+
+            <span class="n">msd</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_parallel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>  <span class="c1"># model state_dict</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ema</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">is_floating_point</span><span class="p">:</span>
+                    <span class="n">v</span> <span class="o">*=</span> <span class="n">d</span>
+                    <span class="n">v</span> <span class="o">+=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">d</span><span class="p">)</span> <span class="o">*</span> <span class="n">msd</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ModelEMA.update_attr"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.torch_utils.ModelEMA.update_attr">[docs]</a>    <span class="k">def</span> <span class="nf">update_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="p">(),</span> <span class="n">exclude</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;process_group&#39;</span><span class="p">,</span> <span class="s1">&#39;reducer&#39;</span><span class="p">)):</span>
+        <span class="c1"># Update EMA attributes</span>
+        <span class="n">copy_attr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ema</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">include</span><span class="p">,</span> <span class="n">exclude</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

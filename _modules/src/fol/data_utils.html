@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.fol.data_utils &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html">
+            <img src="../../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.fol.data_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.fol.data_utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os.path</span>
+
+<span class="kn">from</span> <span class="nn">lark</span> <span class="kn">import</span> <span class="n">Lark</span>
+<span class="kn">from</span> <span class="nn">.exp_parser</span> <span class="kn">import</span> <span class="n">ExpTree</span>
+<span class="kn">from</span> <span class="nn">.language</span> <span class="kn">import</span> <span class="n">Language</span><span class="p">,</span> <span class="n">DataType</span>
+<span class="kn">from</span> <span class="nn">.logic</span> <span class="kn">import</span> <span class="n">Predicate</span><span class="p">,</span> <span class="n">NeuralPredicate</span><span class="p">,</span> <span class="n">FuncSymbol</span><span class="p">,</span> <span class="n">Const</span>
+
+
+<div class="viewcode-block" id="DataUtils"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils">[docs]</a><span class="k">class</span> <span class="nc">DataUtils</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Utilities about logic.</span>
+
+<span class="sd">    A class of utilities about first-order logic.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset_type (str): A dataset type (kandinsky or clevr).</span>
+<span class="sd">        dataset (str): A dataset to be used.</span>
+
+<span class="sd">    Attrs:</span>
+<span class="sd">        base_path: The base path of the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lark_path</span><span class="p">,</span> <span class="n">lang_base_path</span><span class="p">,</span> <span class="n">dataset_type</span><span class="o">=</span><span class="s1">&#39;kandinsky&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;twopairs&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">=</span> <span class="n">lang_base_path</span> <span class="o">+</span> <span class="n">dataset_type</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">dataset</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lark_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">grammar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lp_atom</span> <span class="o">=</span> <span class="n">Lark</span><span class="p">(</span><span class="n">grammar</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="s2">&quot;atom&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lark_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">grammar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lp_clause</span> <span class="o">=</span> <span class="n">Lark</span><span class="p">(</span><span class="n">grammar</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="s2">&quot;clause&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataUtils.load_clauses"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.load_clauses">[docs]</a>    <span class="k">def</span> <span class="nf">load_clauses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read lines and parse to Atom objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clauses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lp_clause</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                    <span class="n">clause</span> <span class="o">=</span> <span class="n">ExpTree</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+                    <span class="n">clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clause</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">clauses</span></div>
+
+<div class="viewcode-block" id="DataUtils.load_atoms"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.load_atoms">[docs]</a>    <span class="k">def</span> <span class="nf">load_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read lines and parse to Atom objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">atoms</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lp_atom</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                    <span class="n">atom</span> <span class="o">=</span> <span class="n">ExpTree</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+                    <span class="n">atoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">atoms</span></div>
+
+<div class="viewcode-block" id="DataUtils.load_preds"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.load_preds">[docs]</a>    <span class="k">def</span> <span class="nf">load_preds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_pred</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">preds</span></div>
+
+<div class="viewcode-block" id="DataUtils.load_neural_preds"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.load_neural_preds">[docs]</a>    <span class="k">def</span> <span class="nf">load_neural_preds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_neural_pred</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">preds</span></div>
+
+<div class="viewcode-block" id="DataUtils.load_consts"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.load_consts">[docs]</a>    <span class="k">def</span> <span class="nf">load_consts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">consts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="n">consts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_const</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">consts</span></div>
+
+<div class="viewcode-block" id="DataUtils.parse_pred"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.parse_pred">[docs]</a>    <span class="k">def</span> <span class="nf">parse_pred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse string to predicates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">pred</span><span class="p">,</span> <span class="n">arity</span><span class="p">,</span> <span class="n">dtype_names_str</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+        <span class="n">dtype_names</span> <span class="o">=</span> <span class="n">dtype_names_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">DataType</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span> <span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dtype_names</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">int</span><span class="p">(</span><span class="n">arity</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">dtypes</span><span class="p">),</span> <span class="s1">&#39;Invalid arity and dtypes in &#39;</span> <span class="o">+</span> <span class="n">pred</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span>
+        <span class="k">return</span> <span class="n">Predicate</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">arity</span><span class="p">),</span> <span class="n">dtypes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataUtils.parse_neural_pred"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.parse_neural_pred">[docs]</a>    <span class="k">def</span> <span class="nf">parse_neural_pred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse string to predicates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">pred</span><span class="p">,</span> <span class="n">arity</span><span class="p">,</span> <span class="n">dtype_names_str</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+        <span class="n">dtype_names</span> <span class="o">=</span> <span class="n">dtype_names_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">dtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">DataType</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span> <span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">dtype_names</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">int</span><span class="p">(</span><span class="n">arity</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">dtypes</span><span class="p">),</span> <span class="s1">&#39;Invalid arity and dtypes in &#39;</span> <span class="o">+</span> <span class="n">pred</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span>
+        <span class="k">return</span> <span class="n">NeuralPredicate</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">arity</span><span class="p">),</span> <span class="n">dtypes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataUtils.parse_funcs"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.parse_funcs">[docs]</a>    <span class="k">def</span> <span class="nf">parse_funcs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse string to function symbols.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">funcs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">func_arity</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+            <span class="n">func</span><span class="p">,</span> <span class="n">arity</span> <span class="o">=</span> <span class="n">func_arity</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+            <span class="n">funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FuncSymbol</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">arity</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">funcs</span></div>
+
+<div class="viewcode-block" id="DataUtils.parse_const"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.parse_const">[docs]</a>    <span class="k">def</span> <span class="nf">parse_const</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse string to function symbols.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">dtype_name</span><span class="p">,</span> <span class="n">const_names_str</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">DataType</span><span class="p">(</span><span class="n">dtype_name</span><span class="p">)</span>
+        <span class="n">const_names</span> <span class="o">=</span> <span class="n">const_names_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Const</span><span class="p">(</span><span class="n">const_name</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">const_name</span> <span class="ow">in</span> <span class="n">const_names</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DataUtils.parse_clause"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.parse_clause">[docs]</a>    <span class="k">def</span> <span class="nf">parse_clause</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clause_str</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lp_clause</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">clause_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ExpTree</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataUtils.get_clauses"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.get_clauses">[docs]</a>    <span class="k">def</span> <span class="nf">get_clauses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_clauses</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">+</span> <span class="s1">&#39;clauses.txt&#39;</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataUtils.get_bk"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.get_bk">[docs]</a>    <span class="k">def</span> <span class="nf">get_bk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_atoms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">+</span> <span class="s1">&#39;bk.txt&#39;</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataUtils.load_language"><a class="viewcode-back" href="../../../src.fol.html#src.fol.data_utils.DataUtils.load_language">[docs]</a>    <span class="k">def</span> <span class="nf">load_language</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load language, background knowledge, and clauses from files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_preds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">+</span> <span class="s1">&#39;preds.txt&#39;</span><span class="p">)</span> <span class="o">+</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_neural_preds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">+</span> <span class="s1">&#39;neural_preds.txt&#39;</span><span class="p">)</span>
+        <span class="n">consts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_consts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_path</span> <span class="o">+</span> <span class="s1">&#39;consts.txt&#39;</span><span class="p">)</span>
+        <span class="n">lang</span> <span class="o">=</span> <span class="n">Language</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="p">[],</span> <span class="n">consts</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lang</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

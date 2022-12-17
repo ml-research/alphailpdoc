@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.nsfr &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html">
+            <img src="../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.nsfr</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.nsfr</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">logic_utils</span> <span class="kn">import</span> <span class="n">get_index_by_predname</span>
+
+
+<div class="viewcode-block" id="NSFReasoner"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner">[docs]</a><span class="k">class</span> <span class="nc">NSFReasoner</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Neuro-Symbolic Forward Reasoner.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        perception_model (nn.Module): The perception model.</span>
+<span class="sd">        facts_converter (nn.Module): The facts converter module.</span>
+<span class="sd">        infer_module (nn.Module): The differentiable forward-chaining inference module.</span>
+<span class="sd">        atoms (list(atom)): The set of ground atoms (facts).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perception_module</span><span class="p">,</span> <span class="n">facts_converter</span><span class="p">,</span> <span class="n">infer_module</span><span class="p">,</span> <span class="n">clause_infer_module</span><span class="p">,</span> <span class="n">atoms</span><span class="p">,</span> <span class="n">bk</span><span class="p">,</span> <span class="n">clauses</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pm</span> <span class="o">=</span> <span class="n">perception_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">facts_converter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">im</span> <span class="o">=</span> <span class="n">infer_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cim</span> <span class="o">=</span> <span class="n">clause_infer_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span> <span class="o">=</span> <span class="n">atoms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clauses</span> <span class="o">=</span> <span class="n">clauses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_train</span> <span class="o">=</span> <span class="n">train</span>
+
+<div class="viewcode-block" id="NSFReasoner.get_clauses"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.get_clauses">[docs]</a>    <span class="k">def</span> <span class="nf">get_clauses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">clause_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">im</span><span class="o">.</span><span class="n">W</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">clauses</span><span class="p">[</span><span class="n">ci</span><span class="p">]</span> <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="n">clause_ids</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;facts: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;I: &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">im</span><span class="o">.</span><span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NSFReasoner.get_params"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.get_params">[docs]</a>    <span class="k">def</span> <span class="nf">get_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">im</span><span class="o">.</span><span class="n">get_params</span><span class="p">()</span>  <span class="c1"># + self.fc.get_params()</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.forward"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># obtain the object-centric representation</span>
+        <span class="n">zs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># convert to the valuation tensor</span>
+        <span class="n">V_0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bk</span><span class="p">)</span>
+        <span class="c1"># perform T-step forward-chaining reasoning</span>
+        <span class="n">V_T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">im</span><span class="p">(</span><span class="n">V_0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">V_T</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.clause_eval"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.clause_eval">[docs]</a>    <span class="k">def</span> <span class="nf">clause_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># obtain the object-centric representation</span>
+        <span class="n">zs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># convert to the valuation tensor</span>
+        <span class="n">V_0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bk</span><span class="p">)</span>
+        <span class="c1"># perform T-step forward-chaining reasoning</span>
+        <span class="n">V_T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cim</span><span class="p">(</span><span class="n">V_0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">V_T</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.predict"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">predname</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extracting a value from the valuation tensor using a given predicate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># v: batch * |atoms|</span>
+        <span class="n">target_index</span> <span class="o">=</span> <span class="n">get_index_by_predname</span><span class="p">(</span>
+            <span class="n">pred_str</span><span class="o">=</span><span class="n">predname</span><span class="p">,</span> <span class="n">atoms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span><span class="p">[:,</span> <span class="n">target_index</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.predict_multi"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.predict_multi">[docs]</a>    <span class="k">def</span> <span class="nf">predict_multi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">prednames</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extracting values from the valuation tensor using given predicates.</span>
+
+<span class="sd">        prednames = [&#39;kp1&#39;, &#39;kp2&#39;, &#39;kp3&#39;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># v: batch * |atoms|</span>
+        <span class="n">target_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">predname</span> <span class="ow">in</span> <span class="n">prednames</span><span class="p">:</span>
+            <span class="n">target_index</span> <span class="o">=</span> <span class="n">get_index_by_predname</span><span class="p">(</span>
+                <span class="n">pred_str</span><span class="o">=</span><span class="n">predname</span><span class="p">,</span> <span class="n">atoms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
+            <span class="n">target_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target_index</span><span class="p">)</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">v</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">target_indices</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">prednames</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">prob</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">B</span> <span class="ow">and</span> <span class="n">prob</span><span class="o">.</span><span class="n">size</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">N</span><span class="p">,</span> <span class="s1">&#39;Invalid shape in the prediction.&#39;</span>
+        <span class="k">return</span> <span class="n">prob</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.print_program"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.print_program">[docs]</a>    <span class="k">def</span> <span class="nf">print_program</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print asummary of logic programs using continuous weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;====== LEARNED PROGRAM ======&#39;</span><span class="p">)</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clauses</span>
+        <span class="n">Ws_softmaxed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">im</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ws_softmaxed: &quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span>
+            <span class="n">Ws_softmaxed</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">W_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Ws_softmaxed</span><span class="p">):</span>
+            <span class="n">max_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">W_</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;C_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;: &#39;</span><span class="p">,</span>
+                  <span class="n">C</span><span class="p">[</span><span class="n">max_i</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">W_</span><span class="p">[</span><span class="n">max_i</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span> <span class="mi">2</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.print_valuation_batch"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.print_valuation_batch">[docs]</a>    <span class="k">def</span> <span class="nf">print_valuation_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valuation</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">40</span><span class="p">):</span>
+        <span class="c1"># self.print_program()</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">valuation</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;===== BATCH: &#39;</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="s1">&#39;=====&#39;</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">valuation</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idxs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.get_valuation_text"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.get_valuation_text">[docs]</a>    <span class="k">def</span> <span class="nf">get_valuation_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valuation</span><span class="p">):</span>
+        <span class="n">text_batch</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>  <span class="c1"># texts for each batch</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">valuation</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+            <span class="n">top_atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_top_atoms</span><span class="p">(</span><span class="n">valuation</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;----BATCH &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;----</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="n">text</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms_to_text</span><span class="p">(</span><span class="n">top_atoms</span><span class="p">)</span>
+            <span class="n">text</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="c1"># texts.append(text)</span>
+            <span class="n">text_batch</span> <span class="o">+=</span> <span class="n">text</span>
+        <span class="k">return</span> <span class="n">text_batch</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.get_top_atoms"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.get_top_atoms">[docs]</a>    <span class="k">def</span> <span class="nf">get_top_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">top_atoms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">atom</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.7</span><span class="p">:</span>
+                <span class="n">top_atoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">top_atoms</span></div>
+
+<div class="viewcode-block" id="NSFReasoner.atoms_to_text"><a class="viewcode-back" href="../../src.html#src.nsfr.NSFReasoner.atoms_to_text">[docs]</a>    <span class="k">def</span> <span class="nf">atoms_to_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atoms</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">atoms</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span>
+        <span class="k">return</span> <span class="n">text</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

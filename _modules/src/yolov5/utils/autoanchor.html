@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.yolov5.utils.autoanchor &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html">
+            <img src="../../../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.yolov5.utils.autoanchor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.yolov5.utils.autoanchor</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Auto-anchor utils</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">yolov5.utils.general</span> <span class="kn">import</span> <span class="n">colorstr</span>
+
+
+<div class="viewcode-block" id="check_anchor_order"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.autoanchor.check_anchor_order">[docs]</a><span class="k">def</span> <span class="nf">check_anchor_order</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="c1"># Check anchor order against stride order for YOLOv5 Detect() module m, and correct if necessary</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># anchor area</span>
+    <span class="n">da</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># delta a</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># delta s</span>
+    <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">!=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sign</span><span class="p">():</span>  <span class="c1"># same order</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reversing anchor order&#39;</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="check_anchors"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.autoanchor.check_anchors">[docs]</a><span class="k">def</span> <span class="nf">check_anchors</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">thr</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">imgsz</span><span class="o">=</span><span class="mi">640</span><span class="p">):</span>
+    <span class="c1"># Check anchor fit to data, recompute if necessary</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">colorstr</span><span class="p">(</span><span class="s1">&#39;autoanchor: &#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">Analyzing anchors... &#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="c1"># Detect()</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;module&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="n">imgsz</span> <span class="o">*</span> <span class="n">dataset</span><span class="o">.</span><span class="n">shapes</span> <span class="o">/</span> <span class="n">dataset</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span>
+        <span class="n">shapes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># augment scale</span>
+    <span class="n">wh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">l</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">shapes</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">labels</span><span class="p">)]))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>  <span class="c1"># wh</span>
+
+    <span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>  <span class="c1"># compute metric</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">wh</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">k</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># ratio metric</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># best_x</span>
+        <span class="n">aat</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">thr</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># anchors above threshold</span>
+        <span class="n">bpr</span> <span class="o">=</span> <span class="p">(</span><span class="n">best</span> <span class="o">&gt;</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">thr</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># best possible recall</span>
+        <span class="k">return</span> <span class="n">bpr</span><span class="p">,</span> <span class="n">aat</span>
+
+    <span class="n">anchors</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># current anchors</span>
+    <span class="n">bpr</span><span class="p">,</span> <span class="n">aat</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">anchors</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;anchors/target = </span><span class="si">{</span><span class="n">aat</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">, Best Possible Recall (BPR) = </span><span class="si">{</span><span class="n">bpr</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bpr</span> <span class="o">&lt;</span> <span class="mf">0.98</span><span class="p">:</span>  <span class="c1"># threshold to recompute</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;. Attempting to improve anchors, please wait...&#39;</span><span class="p">)</span>
+        <span class="n">na</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># number of anchors</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">anchors</span> <span class="o">=</span> <span class="n">kmean_anchors</span><span class="p">(</span>
+                <span class="n">dataset</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">na</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="n">imgsz</span><span class="p">,</span> <span class="n">thr</span><span class="o">=</span><span class="n">thr</span><span class="p">,</span> <span class="n">gen</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">ERROR: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">new_bpr</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">anchors</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">new_bpr</span> <span class="o">&gt;</span> <span class="n">bpr</span><span class="p">:</span>  <span class="c1"># replace anchors</span>
+            <span class="n">anchors</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="n">anchors</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">type_as</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">anchors</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">anchor_grid</span><span class="p">)</span>  <span class="c1"># for inference</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">anchors</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="p">)</span> <span class="o">/</span> \
+                <span class="n">m</span><span class="o">.</span><span class="n">stride</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">anchors</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># loss</span>
+            <span class="n">check_anchor_order</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">New anchors saved to model. Update model *.yaml to use these anchors in the future.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">Original anchors better than new anchors. Proceeding with original anchors.&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>  <span class="c1"># newline</span></div>
+
+
+<div class="viewcode-block" id="kmean_anchors"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.autoanchor.kmean_anchors">[docs]</a><span class="k">def</span> <span class="nf">kmean_anchors</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;./data/coco128.yaml&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">thr</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">gen</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Creates kmeans-evolved anchors from training dataset</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            path: path to dataset *.yaml, or a loaded dataset</span>
+<span class="sd">            n: number of anchors</span>
+<span class="sd">            img_size: image size used for training</span>
+<span class="sd">            thr: anchor-label wh ratio threshold hyperparameter hyp[&#39;anchor_t&#39;] used for training, default=4.0</span>
+<span class="sd">            gen: generations to evolve anchors using genetic algorithm</span>
+<span class="sd">            verbose: print all results</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">            k: kmeans evolved anchors</span>
+
+<span class="sd">        Usage:</span>
+<span class="sd">            from utils.autoanchor import *; _ = kmean_anchors()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">scipy.cluster.vq</span> <span class="kn">import</span> <span class="n">kmeans</span>
+
+    <span class="n">thr</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">thr</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">colorstr</span><span class="p">(</span><span class="s1">&#39;autoanchor: &#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">wh</span><span class="p">):</span>  <span class="c1"># compute metrics</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">wh</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">k</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># ratio metric</span>
+        <span class="c1"># x = wh_iou(wh, torch.tensor(k))  # iou metric</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># x, best_x</span>
+
+    <span class="k">def</span> <span class="nf">anchor_fitness</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>  <span class="c1"># mutation fitness</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">best</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">wh</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">best</span> <span class="o">*</span> <span class="p">(</span><span class="n">best</span> <span class="o">&gt;</span> <span class="n">thr</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">())</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># fitness</span>
+
+    <span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">1</span><span class="p">))]</span>  <span class="c1"># sort small to large</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">best</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">wh0</span><span class="p">)</span>
+        <span class="n">bpr</span><span class="p">,</span> <span class="n">aat</span> <span class="o">=</span> <span class="p">(</span><span class="n">best</span> <span class="o">&gt;</span> <span class="n">thr</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">thr</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="n">n</span>  <span class="c1"># best possible recall, anch &gt; thr</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">thr=</span><span class="si">{</span><span class="n">thr</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">bpr</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1"> best possible recall, </span><span class="si">{</span><span class="n">aat</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> anchors past thr&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">, img_size=</span><span class="si">{</span><span class="n">img_size</span><span class="si">}</span><span class="s1">, metric_all=</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">-mean/best, &#39;</span>
+              <span class="sa">f</span><span class="s1">&#39;past_thr=</span><span class="si">{</span><span class="n">x</span><span class="p">[</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">thr</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">-mean: &#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%i</span><span class="s1">,</span><span class="si">%i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;,  &#39;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">k</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># use in *.cfg</span>
+        <span class="k">return</span> <span class="n">k</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>  <span class="c1"># *.yaml file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data_dict</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>  <span class="c1"># model dict</span>
+        <span class="kn">from</span> <span class="nn">utils.datasets</span> <span class="kn">import</span> <span class="n">LoadImagesAndLabels</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">LoadImagesAndLabels</span><span class="p">(</span>
+            <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">augment</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">path</span>  <span class="c1"># dataset</span>
+
+    <span class="c1"># Get label wh</span>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="n">img_size</span> <span class="o">*</span> <span class="n">dataset</span><span class="o">.</span><span class="n">shapes</span> <span class="o">/</span> <span class="n">dataset</span><span class="o">.</span><span class="n">shapes</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">wh0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">l</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">labels</span><span class="p">)])</span>  <span class="c1"># wh</span>
+
+    <span class="c1"># Filter</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="n">wh0</span> <span class="o">&lt;</span> <span class="mf">3.0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">i</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">WARNING: Extremely small objects found. </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wh0</span><span class="p">)</span><span class="si">}</span><span class="s1"> labels are &lt; 3 pixels in size.&#39;</span><span class="p">)</span>
+    <span class="n">wh</span> <span class="o">=</span> <span class="n">wh0</span><span class="p">[(</span><span class="n">wh0</span> <span class="o">&gt;=</span> <span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>  <span class="c1"># filter &gt; 2 pixels</span>
+    <span class="c1"># wh = wh * (np.random.rand(wh.shape[0], 1) * 0.9 + 0.1)  # multiply by random scale 0-1</span>
+
+    <span class="c1"># Kmeans calculation</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">Running kmeans for </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1"> anchors on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wh</span><span class="p">)</span><span class="si">}</span><span class="s1"> points...&#39;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">wh</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># sigmas for whitening</span>
+    <span class="n">k</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">kmeans</span><span class="p">(</span><span class="n">wh</span> <span class="o">/</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>  <span class="c1"># points, mean distance</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="n">n</span><span class="p">,</span> <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">ERROR: scipy.cluster.vq.kmeans requested </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1"> points but returned only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">*=</span> <span class="n">s</span>
+    <span class="n">wh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">wh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># filtered</span>
+    <span class="n">wh0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">wh0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># unfiltered</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">print_results</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="c1"># Plot</span>
+    <span class="c1"># k, d = [None] * 20, [None] * 20</span>
+    <span class="c1"># for i in tqdm(range(1, 21)):</span>
+    <span class="c1">#     k[i-1], d[i-1] = kmeans(wh / s, i)  # points, mean distance</span>
+    <span class="c1"># fig, ax = plt.subplots(1, 2, figsize=(14, 7), tight_layout=True)</span>
+    <span class="c1"># ax = ax.ravel()</span>
+    <span class="c1"># ax[0].plot(np.arange(1, 21), np.array(d) ** 2, marker=&#39;.&#39;)</span>
+    <span class="c1"># fig, ax = plt.subplots(1, 2, figsize=(14, 7))  # plot wh</span>
+    <span class="c1"># ax[0].hist(wh[wh[:, 0]&lt;100, 0],400)</span>
+    <span class="c1"># ax[1].hist(wh[wh[:, 1]&lt;100, 1],400)</span>
+    <span class="c1"># fig.savefig(&#39;wh.png&#39;, dpi=200)</span>
+
+    <span class="c1"># Evolve</span>
+    <span class="n">npr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span>
+    <span class="c1"># fitness, generations, mutation prob, sigma</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">sh</span><span class="p">,</span> <span class="n">mp</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">anchor_fitness</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">k</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span>
+    <span class="c1"># progress bar</span>
+    <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span>
+        <span class="nb">range</span><span class="p">(</span><span class="n">gen</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">Evolving anchors with Genetic Algorithm:&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">v</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>  <span class="c1"># mutate until a change occurs (prevent duplicates)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="p">((</span><span class="n">npr</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">mp</span><span class="p">)</span> <span class="o">*</span> <span class="n">npr</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">*</span>
+                 <span class="n">npr</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="o">*</span><span class="n">sh</span><span class="p">)</span> <span class="o">*</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span>
+        <span class="n">kg</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">fg</span> <span class="o">=</span> <span class="n">anchor_fitness</span><span class="p">(</span><span class="n">kg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fg</span> <span class="o">&gt;</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">fg</span><span class="p">,</span> <span class="n">kg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">Evolving anchors with Genetic Algorithm: fitness = </span><span class="si">{</span><span class="n">f</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">print_results</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">print_results</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>

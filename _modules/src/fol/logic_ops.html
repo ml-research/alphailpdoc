@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.fol.logic_ops &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html">
+            <img src="../../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.fol.logic_ops</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.fol.logic_ops</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.logic</span> <span class="kn">import</span> <span class="n">Clause</span><span class="p">,</span> <span class="n">Atom</span><span class="p">,</span> <span class="n">FuncTerm</span><span class="p">,</span> <span class="n">Const</span><span class="p">,</span> <span class="n">Var</span>
+
+
+<div class="viewcode-block" id="subs"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.subs">[docs]</a><span class="k">def</span> <span class="nf">subs</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Substitute var = const</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    exp : .logic.CLause .logic.Atom .logic.FuncTerm .logic.Const .logic.Var</span>
+<span class="sd">        logical expression</span>
+<span class="sd">        atom, clause, or term</span>
+<span class="sd">    target_var : .logic.Var</span>
+<span class="sd">        target variable of the substitution</span>
+<span class="sd">    const : .logic.Const</span>
+<span class="sd">        constant to be substituted</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    exp : .logic.CLause .logic.Atom .logic.FuncTerm .logic.Const .logic.Var</span>
+<span class="sd">        result of the substitution</span>
+<span class="sd">        logical expression</span>
+<span class="sd">        atom, clause, or term</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">Clause</span><span class="p">:</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">subs</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">head</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">[</span><span class="n">subs</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span> <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">exp</span><span class="o">.</span><span class="n">body</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Clause</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">Atom</span><span class="p">:</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="p">[</span><span class="n">subs</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">exp</span><span class="o">.</span><span class="n">terms</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Atom</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">pred</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">FuncTerm</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">subs</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">exp</span><span class="o">.</span><span class="n">args</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">FuncTerm</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">func_symbol</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">Var</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">exp</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">target_var</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">const</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">exp</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">Const</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">exp</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Unknown type in substitution: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="subs_list"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.subs_list">[docs]</a><span class="k">def</span> <span class="nf">subs_list</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="n">theta_list</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">Clause</span><span class="p">:</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">head</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">body</span>
+        <span class="k">for</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span> <span class="ow">in</span> <span class="n">theta_list</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">subs</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="p">[</span><span class="n">subs</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span> <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">body</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Clause</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="o">==</span> <span class="n">Atom</span><span class="p">:</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">terms</span>
+        <span class="k">for</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span> <span class="ow">in</span> <span class="n">theta_list</span><span class="p">:</span>
+            <span class="n">terms</span> <span class="o">=</span> <span class="p">[</span><span class="n">subs</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Atom</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">pred</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+    <span class="c1">#elif type(exp) == FuncTerm:</span>
+    <span class="c1">#    for target_var, const in theta_list:</span>
+    <span class="c1">#        args = [subs(arg, target_var, const) for arg in exp.args]</span>
+    <span class="c1">#    return FuncTerm(exp.func_symbol, args)</span>
+    <span class="c1">#elif type(exp) == Var:</span>
+    <span class="c1">#    if exp.name == target_var.name:</span>
+    <span class="c1">#        return const</span>
+    <span class="c1">#    else:</span>
+    <span class="c1">#        return exp</span>
+    <span class="c1">#elif type(exp) == Const:</span>
+    <span class="c1">#    return exp</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Unknown type in substitution: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">__subs_list</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">theta_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    perform list of substitutions</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    clause : .logic.Clause</span>
+<span class="sd">        target clause</span>
+<span class="sd">    theta_list : List[(.logic.Var, .logic.Const)]</span>
+<span class="sd">        list of substitute operations to be performed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">clause</span>
+    <span class="k">for</span> <span class="n">theta</span> <span class="ow">in</span> <span class="n">theta_list</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subs</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="unify"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.unify">[docs]</a><span class="k">def</span> <span class="nf">unify</span><span class="p">(</span><span class="n">atoms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unification of first-order logic expressions</span>
+<span class="sd">    details in [Foundations of Inductive Logic Programming. Nienhuys-Cheng, S.-H. et.al. 1997.]</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">        atoms : List[.logic.Atom]</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        flag : bool</span>
+<span class="sd">            unifiable or not</span>
+<span class="sd">        unifier : List[(.logic.Var, .logic.Const)]</span>
+<span class="sd">            unifiable - unifier (list of substitutions)</span>
+<span class="sd">            not unifiable - empty list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># empty set</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="c1"># check predicates</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">pred</span> <span class="o">!=</span> <span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pred</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="c1"># check all the same</span>
+    <span class="n">all_same_flag</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">all_same_flag</span> <span class="o">=</span> <span class="n">all_same_flag</span> <span class="ow">and</span> <span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">all_same_flag</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">theta_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">atoms_</span> <span class="o">=</span> <span class="n">atoms</span>
+    <span class="k">while</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+        <span class="c1"># check terms from left</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">atoms_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pred</span><span class="o">.</span><span class="n">arity</span><span class="p">):</span>
+            <span class="c1"># atom_1(term_1, ..., term_i, ...), ..., atom_j(term_1, ..., term_i, ...), ...</span>
+            <span class="n">terms_i</span> <span class="o">=</span> <span class="p">[</span><span class="n">atoms_</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">terms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">atoms_</span><span class="p">))]</span>
+            <span class="n">disagree_flag</span><span class="p">,</span> <span class="n">disagree_set</span> <span class="o">=</span> <span class="n">get_disagreements</span><span class="p">(</span><span class="n">terms_i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">disagree_flag</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">var_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">disagree_set</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">Var</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">var_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># substitute</span>
+                <span class="n">subs_var</span> <span class="o">=</span> <span class="n">var_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># find term where the var does not occur</span>
+                <span class="n">subs_flag</span><span class="p">,</span> <span class="n">subs_term</span> <span class="o">=</span> <span class="n">find_subs_term</span><span class="p">(</span>
+                    <span class="n">subs_var</span><span class="p">,</span> <span class="n">disagree_set</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">subs_flag</span><span class="p">:</span>
+                    <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">theta_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">subs_var</span><span class="p">,</span> <span class="n">subs_term</span><span class="p">))</span>
+                    <span class="n">subs_flag</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="c1"># UNIFICATION SUCCESS</span>
+                    <span class="n">atoms_</span> <span class="o">=</span> <span class="p">[</span><span class="n">subs</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">subs_var</span><span class="p">,</span> <span class="n">subs_term</span><span class="p">)</span>
+                              <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">atoms_</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">is_singleton</span><span class="p">(</span><span class="n">atoms_</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">theta_list</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># UNIFICATION FAILED</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[])</span></div>
+
+
+<div class="viewcode-block" id="get_disagreements"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.get_disagreements">[docs]</a><span class="k">def</span> <span class="nf">get_disagreements</span><span class="p">(</span><span class="n">terms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    get desagreements in the unification algorithm</span>
+<span class="sd">    details in [Foundations of Inductive Logic Programming. Nienhuys-Cheng, S.-H. et.al. 1997.]</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    temrs : List[Term]</span>
+<span class="sd">        Term : .logic.FuncTerm .logic.Const .logic.Var</span>
+<span class="sd">        list of terms</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    disagree_flag : bool</span>
+<span class="sd">        flag of disagreement</span>
+<span class="sd">    disagree_terms : List[Term]</span>
+<span class="sd">        Term : .logic.FuncTerm .logic.Const .logic.Var</span>
+<span class="sd">        terms of disagreement</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">disagree_flag</span><span class="p">,</span> <span class="n">disagree_index</span> <span class="o">=</span> <span class="n">get_disagree_index</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">disagree_flag</span><span class="p">:</span>
+        <span class="n">disagree_terms</span> <span class="o">=</span> <span class="p">[</span><span class="n">term</span><span class="o">.</span><span class="n">get_ith_term</span><span class="p">(</span>
+            <span class="n">disagree_index</span><span class="p">)</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">disagree_flag</span><span class="p">,</span> <span class="n">disagree_terms</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">disagree_flag</span><span class="p">,</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="get_disagree_index"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.get_disagree_index">[docs]</a><span class="k">def</span> <span class="nf">get_disagree_index</span><span class="p">(</span><span class="n">terms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    get the desagreement index in the unification algorithm</span>
+<span class="sd">    details in [Foundations of Inductive Logic Programming. Nienhuys-Cheng, S.-H. et.al. 1997.]</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    terms : List[Term]</span>
+<span class="sd">        Term : .logic.FuncTerm .logic.Const .logic.Var</span>
+<span class="sd">        list of terms</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    disagree_flag : bool</span>
+<span class="sd">        flag of disagreement</span>
+<span class="sd">    disagree_index : int</span>
+<span class="sd">        index of the disagreement term in the args of predicates</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">symbols_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">term</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">symbols</span><span class="p">)</span> <span class="k">for</span> <span class="n">symbols</span> <span class="ow">in</span> <span class="n">symbols_list</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">ith_symbols</span> <span class="o">=</span> <span class="p">[</span><span class="n">symbols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">symbols</span> <span class="ow">in</span> <span class="n">symbols_list</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ith_symbols</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">ith_symbols</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="n">ith_symbols</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+    <span class="c1"># all the same terms</span>
+    <span class="k">return</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="occur_check"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.occur_check">[docs]</a><span class="k">def</span> <span class="nf">occur_check</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">term</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    occur check function</span>
+<span class="sd">    details in [Foundations of Inductive Logic Programming. Nienhuys-Cheng, S.-H. et.al. 1997.]</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    variable : .logic.Var</span>
+<span class="sd">    term : Term</span>
+<span class="sd">        Term : .logic.FuncTerm .logic.Const .logic.Var</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    occur_flag : bool</span>
+<span class="sd">        flag ofthe occurance of the variable</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">term</span><span class="p">)</span> <span class="o">==</span> <span class="n">Const</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">term</span><span class="p">)</span> <span class="o">==</span> <span class="n">Var</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">term</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># func term case</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">term</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">occur_check</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="find_subs_term"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.find_subs_term">[docs]</a><span class="k">def</span> <span class="nf">find_subs_term</span><span class="p">(</span><span class="n">subs_var</span><span class="p">,</span> <span class="n">disagree_set</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find term where the var does not occur</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    subs_var : .logic.Var</span>
+<span class="sd">    disagree_set : List[.logic.Term]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    flag : bool</span>
+<span class="sd">    term : .logic.Term</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">disagree_set</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">occur_check</span><span class="p">(</span><span class="n">subs_var</span><span class="p">,</span> <span class="n">term</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">term</span>
+    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">Term</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="is_singleton"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.is_singleton">[docs]</a><span class="k">def</span> <span class="nf">is_singleton</span><span class="p">(</span><span class="n">atoms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    returns whether all the input atoms are the same or not</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">     atoms: List[.logic.Atom]</span>
+<span class="sd">        [a_1, a_2, ..., a_n]</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    flag : bool</span>
+<span class="sd">        a_1 == a_2 == ... == a_n</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="ow">and</span> <span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">atoms</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="is_entailed"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.is_entailed">[docs]</a><span class="k">def</span> <span class="nf">is_entailed</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">clause</span><span class="p">,</span> <span class="n">facts</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    decision function of ground atom is entailed by a clause and facts by n-step inference</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">     e : .logic.Atom</span>
+<span class="sd">        ground atom</span>
+<span class="sd">    clause : .logic.Clause</span>
+<span class="sd">        clause</span>
+<span class="sd">    facts : List[.logic.Atom]</span>
+<span class="sd">        set of facts</span>
+<span class="sd">    n : int</span>
+<span class="sd">        infer step</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    flag : bool</span>
+<span class="sd">        ${clause} \cup facts \models e$</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">flag</span><span class="p">,</span> <span class="n">thetas</span> <span class="o">=</span> <span class="n">unify</span><span class="p">([</span><span class="n">e</span><span class="p">,</span> <span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">flag</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">t_p_n</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">facts</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="t_p_n"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.t_p_n">[docs]</a><span class="k">def</span> <span class="nf">t_p_n</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">facts</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    applying the T_p operator n-times taking union of results</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    clause : .logic.Clause</span>
+<span class="sd">        clause</span>
+<span class="sd">    facts : List[.logic.Atom]</span>
+<span class="sd">        set of facts</span>
+<span class="sd">    n : int</span>
+<span class="sd">        infer step</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    G : Set[.logic.Atom]</span>
+<span class="sd">        set of ground atoms entailed by ${clause} \cup facts$</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">facts</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">t_p</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">G</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">G</span></div>
+
+
+<div class="viewcode-block" id="t_p"><a class="viewcode-back" href="../../../src.fol.html#src.fol.logic_ops.t_p">[docs]</a><span class="k">def</span> <span class="nf">t_p</span><span class="p">(</span><span class="n">clause</span><span class="p">,</span> <span class="n">facts</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    T_p operator</span>
+<span class="sd">    limited to clauses with one body atom</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">    ------</span>
+<span class="sd">    clause : .logic.Clause</span>
+<span class="sd">        clause</span>
+<span class="sd">    facts : List[.logic.Atom]</span>
+<span class="sd">        set of facts</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    S : List[.logic.Atom]</span>
+<span class="sd">        set of ground atoms entailed by one step forward-chaining inference</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># |body| == 1</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">unify_dic</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">fact</span> <span class="ow">in</span> <span class="n">facts</span><span class="p">:</span>
+        <span class="n">flag</span><span class="p">,</span> <span class="n">thetas</span> <span class="o">=</span> <span class="n">unify</span><span class="p">([</span><span class="n">clause</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fact</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">flag</span><span class="p">:</span>
+            <span class="n">head_fact</span> <span class="o">=</span> <span class="n">subs_list</span><span class="p">(</span><span class="n">clause</span><span class="o">.</span><span class="n">head</span><span class="p">,</span> <span class="n">thetas</span><span class="p">)</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">S</span> <span class="o">+</span> <span class="p">[</span><span class="n">head_fact</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">S</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>
