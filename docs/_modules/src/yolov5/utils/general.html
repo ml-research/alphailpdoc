@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.yolov5.utils.general &mdash; alphailp v1.0 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../../_static/alphailp_favicon.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html">
+            <img src="../../../../_static/aILP_logo_pink.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Building-a-Reasoner.html">Building a Reasoner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Building-a-Learner.html">Building a Learner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Compositional-Test.html">Compositional Test by Differentiable Reasoning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../valuation.html">Valuation Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mode-declaration.html">Mode Declaration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../src.html">src package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">alphailp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.yolov5.utils.general</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.yolov5.utils.general</h1><div class="highlight"><pre>
+<span></span><span class="c1"># YOLOv5 general utils</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">repeat</span>
+<span class="kn">from</span> <span class="nn">multiprocessing.pool</span> <span class="kn">import</span> <span class="n">ThreadPool</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span> <span class="k">as</span> <span class="nn">pkg</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">from</span> <span class="nn">yolov5.utils.google_utils</span> <span class="kn">import</span> <span class="n">gsutil_getsize</span>
+<span class="kn">from</span> <span class="nn">yolov5.utils.metrics</span> <span class="kn">import</span> <span class="n">fitness</span>
+<span class="kn">from</span> <span class="nn">yolov5.utils.torch_utils</span> <span class="kn">import</span> <span class="n">init_torch_seeds</span>
+
+<span class="c1"># Settings</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="s1">&#39;long&#39;</span><span class="p">)</span>
+<span class="c1"># format short g, %precision=5</span>
+<span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">320</span><span class="p">,</span> <span class="n">formatter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;float_kind&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{:11.5g}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">})</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_columns</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="c1"># prevent OpenCV from multithreading (incompatible with PyTorch DataLoader)</span>
+<span class="n">cv2</span><span class="o">.</span><span class="n">setNumThreads</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;NUMEXPR_MAX_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+    <span class="nb">min</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="mi">8</span><span class="p">))</span>  <span class="c1"># NumExpr max threads</span>
+
+
+<div class="viewcode-block" id="set_logging"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.set_logging">[docs]</a><span class="k">def</span> <span class="nf">set_logging</span><span class="p">(</span><span class="n">rank</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span> <span class="k">if</span> <span class="p">(</span><span class="n">verbose</span> <span class="ow">and</span> <span class="n">rank</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="k">else</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARN</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="init_seeds"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.init_seeds">[docs]</a><span class="k">def</span> <span class="nf">init_seeds</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="c1"># Initialize random number generator (RNG) seeds</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">init_torch_seeds</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_latest_run"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.get_latest_run">[docs]</a><span class="k">def</span> <span class="nf">get_latest_run</span><span class="p">(</span><span class="n">search_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+    <span class="c1"># Return path to most recent &#39;last.pt&#39; in /runs (i.e. to --resume from)</span>
+    <span class="n">last_list</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">search_dir</span><span class="si">}</span><span class="s1">/**/last*.pt&#39;</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">last_list</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getctime</span><span class="p">)</span> <span class="k">if</span> <span class="n">last_list</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span></div>
+
+
+<div class="viewcode-block" id="is_docker"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.is_docker">[docs]</a><span class="k">def</span> <span class="nf">is_docker</span><span class="p">():</span>
+    <span class="c1"># Is environment a Docker container</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/workspace&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>  <span class="c1"># or Path(&#39;/.dockerenv&#39;).exists()</span></div>
+
+
+<div class="viewcode-block" id="is_colab"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.is_colab">[docs]</a><span class="k">def</span> <span class="nf">is_colab</span><span class="p">():</span>
+    <span class="c1"># Is environment a Google Colab instance</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">google.colab</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="emojis"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.emojis">[docs]</a><span class="k">def</span> <span class="nf">emojis</span><span class="p">(</span><span class="nb">str</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="c1"># Return platform-dependent emoji-safe version of string</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;ignore&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span> <span class="k">else</span> <span class="nb">str</span></div>
+
+
+<div class="viewcode-block" id="file_size"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.file_size">[docs]</a><span class="k">def</span> <span class="nf">file_size</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+    <span class="c1"># Return file size in MB</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">/</span> <span class="mf">1e6</span></div>
+
+
+<div class="viewcode-block" id="check_online"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_online">[docs]</a><span class="k">def</span> <span class="nf">check_online</span><span class="p">():</span>
+    <span class="c1"># Check internet connectivity</span>
+    <span class="kn">import</span> <span class="nn">socket</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># check host accesability</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">create_connection</span><span class="p">((</span><span class="s2">&quot;1.1.1.1&quot;</span><span class="p">,</span> <span class="mi">443</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="check_git_status"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_git_status">[docs]</a><span class="k">def</span> <span class="nf">check_git_status</span><span class="p">():</span>
+    <span class="c1"># Recommend &#39;git pull&#39; if code is out of date</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">colorstr</span><span class="p">(</span><span class="s1">&#39;github: &#39;</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;.git&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="s1">&#39;skipping check (not a git repository)&#39;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">is_docker</span><span class="p">(),</span> <span class="s1">&#39;skipping check (Docker image)&#39;</span>
+        <span class="k">assert</span> <span class="n">check_online</span><span class="p">(),</span> <span class="s1">&#39;skipping check (offline)&#39;</span>
+
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;git fetch &amp;&amp; git config --get remote.origin.url&#39;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;.git&#39;</span><span class="p">)</span>  <span class="c1"># github repo url</span>
+        <span class="n">branch</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+            <span class="s1">&#39;git rev-parse --abbrev-ref HEAD&#39;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>  <span class="c1"># checked out</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;git rev-list </span><span class="si">{</span><span class="n">branch</span><span class="si">}</span><span class="s1">..origin/master --count&#39;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>  <span class="c1"># commits behind</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;⚠️ WARNING: code is out of date by </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> commit</span><span class="si">{</span><span class="s1">&#39;s&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span> \
+                <span class="sa">f</span><span class="s2">&quot;Use &#39;git pull&#39; to update or &#39;git clone </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&#39; to download latest.&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;up to date with </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1"> ✅&#39;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">emojis</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>  <span class="c1"># emoji-safe</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="check_python"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_python">[docs]</a><span class="k">def</span> <span class="nf">check_python</span><span class="p">(</span><span class="n">minimum</span><span class="o">=</span><span class="s1">&#39;3.7.0&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1"># Check current python version vs. required python version</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_version</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">parse_version</span><span class="p">(</span><span class="n">current</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">parse_version</span><span class="p">(</span><span class="n">minimum</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">required</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Python </span><span class="si">{</span><span class="n">minimum</span><span class="si">}</span><span class="s1"> required by YOLOv5, but Python </span><span class="si">{</span><span class="n">current</span><span class="si">}</span><span class="s1"> is currently installed&#39;</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="check_requirements"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_requirements">[docs]</a><span class="k">def</span> <span class="nf">check_requirements</span><span class="p">(</span><span class="n">requirements</span><span class="o">=</span><span class="s1">&#39;requirements.txt&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">()):</span>
+    <span class="c1"># Check installed dependencies meet requirements (pass *.txt file or list of packages)</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">colorstr</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="s1">&#39;requirements:&#39;</span><span class="p">)</span>
+    <span class="n">check_python</span><span class="p">()</span>  <span class="c1"># check python version</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">requirements</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>  <span class="c1"># requirements.txt file</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">requirements</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">file</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2"> not found, check failed.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">requirements</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">name</span><span class="si">}{</span><span class="n">x</span><span class="o">.</span><span class="n">specifier</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">parse_requirements</span><span class="p">(</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">())</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># list or tuple of packages</span>
+        <span class="n">requirements</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">requirements</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">]</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># number of packages updates</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">requirements</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># DistributionNotFound or VersionConflict if requirements not met</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> not found and is required by YOLOv5, attempting auto-update...&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;pip install &#39;</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n</span><span class="p">:</span>  <span class="c1"># if packages updated</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39;file&#39;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span> <span class="k">else</span> <span class="n">requirements</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> package</span><span class="si">{</span><span class="s1">&#39;s&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2"> updated per </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> ⚠️ </span><span class="si">{</span><span class="n">colorstr</span><span class="p">(</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="s1">&#39;Restart runtime or rerun command for updates to take effect&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">emojis</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>  <span class="c1"># emoji-safe</span></div>
+
+
+<div class="viewcode-block" id="check_img_size"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_img_size">[docs]</a><span class="k">def</span> <span class="nf">check_img_size</span><span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+    <span class="c1"># Verify img_size is a multiple of stride s</span>
+    <span class="n">new_size</span> <span class="o">=</span> <span class="n">make_divisible</span><span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>  <span class="c1"># ceil gs-multiple</span>
+    <span class="k">if</span> <span class="n">new_size</span> <span class="o">!=</span> <span class="n">img_size</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: --img-size </span><span class="si">%g</span><span class="s1"> must be multiple of max stride </span><span class="si">%g</span><span class="s1">, updating to </span><span class="si">%g</span><span class="s1">&#39;</span> <span class="o">%</span>
+              <span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">new_size</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new_size</span></div>
+
+
+<div class="viewcode-block" id="check_imshow"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_imshow">[docs]</a><span class="k">def</span> <span class="nf">check_imshow</span><span class="p">():</span>
+    <span class="c1"># Check if environment supports image displays</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">is_docker</span><span class="p">(),</span> <span class="s1">&#39;cv2.imshow() is disabled in Docker environments&#39;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">is_colab</span><span class="p">(),</span> <span class="s1">&#39;cv2.imshow() is disabled in Google Colab environments&#39;</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">destroyAllWindows</span><span class="p">()</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;WARNING: Environment does not support cv2.imshow() or PIL Image.show() image displays</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="check_file"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_file">[docs]</a><span class="k">def</span> <span class="nf">check_file</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+    <span class="c1"># Search/download file (if necessary) and return path</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>  <span class="c1"># convert to str()</span>
+    <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">file</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1"># exists</span>
+        <span class="k">return</span> <span class="n">file</span>
+    <span class="k">elif</span> <span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s1">&#39;http://&#39;</span><span class="p">,</span> <span class="s1">&#39;https://&#39;</span><span class="p">)):</span>  <span class="c1"># download</span>
+        <span class="n">url</span><span class="p">,</span> <span class="n">file</span> <span class="o">=</span> <span class="n">file</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Downloading </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">...&#39;</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">download_url_to_file</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;File download failed: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span>  <span class="c1"># check</span>
+        <span class="k">return</span> <span class="n">file</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># search</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;./**/&#39;</span> <span class="o">+</span> <span class="n">file</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># find file</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;File not found: </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">&#39;</span>  <span class="c1"># assert file was found</span>
+        <span class="c1"># assert unique</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Multiple files match &#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&#39;, specify exact path: </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># return file</span></div>
+
+
+<div class="viewcode-block" id="check_dataset"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.check_dataset">[docs]</a><span class="k">def</span> <span class="nf">check_dataset</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="c1"># Download dataset if not found locally</span>
+    <span class="n">val</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;val&#39;</span><span class="p">),</span> <span class="nb">dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;download&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">val</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+               <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">val</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">val</span><span class="p">])]</span>  <span class="c1"># val path</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">val</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">WARNING: Dataset not found, nonexistent paths: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                  <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">val</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">exists</span><span class="p">()])</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>  <span class="c1"># download script</span>
+                <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.zip&#39;</span><span class="p">):</span>  <span class="c1"># URL</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># filename</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Downloading </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> ...&#39;</span><span class="p">)</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">download_url_to_file</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unzip -q </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1"> -d ../ &amp;&amp; rm </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># unzip</span>
+                <span class="k">elif</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;bash &#39;</span><span class="p">):</span>  <span class="c1"># bash script</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Running </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> ...&#39;</span><span class="p">)</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># python script</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">exec</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># return None</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Dataset autodownload </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="s1">&#39;success&#39;</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;failure&#39;</span><span class="p">))</span>  <span class="c1"># print result</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Dataset not found.&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="download"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.download">[docs]</a><span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">unzip</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">curl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># Multi-threaded file download and unzip function</span>
+    <span class="k">def</span> <span class="nf">download_one</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">dir</span><span class="p">):</span>
+        <span class="c1"># Download 1 file</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">dir</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># filename</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Downloading </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">...&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">curl</span><span class="p">:</span>
+                <span class="c1"># curl download, retry and resume on fail</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;curl -L &#39;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&#39; -o &#39;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&#39; --retry 9 -C -&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">download_url_to_file</span><span class="p">(</span>
+                    <span class="n">url</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># torch download</span>
+        <span class="k">if</span> <span class="n">unzip</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;.zip&#39;</span><span class="p">,</span> <span class="s1">&#39;.gz&#39;</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unzipping </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">...&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.zip&#39;</span><span class="p">:</span>
+                <span class="c1"># unzip -quiet -overwrite</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;unzip -qo </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1"> -d </span><span class="si">{</span><span class="nb">dir</span><span class="si">}</span><span class="s1"> &amp;&amp; rm </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">elif</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.gz&#39;</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;tar xfz </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1"> --directory </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s1">&#39;</span>  <span class="c1"># unzip</span>
+            <span class="k">if</span> <span class="n">delete</span><span class="p">:</span>  <span class="c1"># delete zip file after unzip</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; &amp;&amp; rm </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="nb">dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+    <span class="nb">dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># make directory</span>
+    <span class="k">if</span> <span class="n">threads</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">ThreadPool</span><span class="p">(</span><span class="n">threads</span><span class="p">)</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">download_one</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">),</span>
+                  <span class="nb">zip</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">repeat</span><span class="p">(</span><span class="nb">dir</span><span class="p">)))</span>  <span class="c1"># multi-threaded</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">url</span><span class="p">:</span>
+            <span class="n">download_one</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="nb">dir</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="make_divisible"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.make_divisible">[docs]</a><span class="k">def</span> <span class="nf">make_divisible</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">divisor</span><span class="p">):</span>
+    <span class="c1"># Returns x evenly divisible by divisor</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">divisor</span><span class="p">)</span> <span class="o">*</span> <span class="n">divisor</span></div>
+
+
+<div class="viewcode-block" id="clean_str"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.clean_str">[docs]</a><span class="k">def</span> <span class="nf">clean_str</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="c1"># Cleans a string by replacing special characters with underscore _</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;[|@#!¡·$€%&amp;()=?¿^*;:,¨´&gt;&lt;+]&quot;</span><span class="p">,</span> <span class="n">repl</span><span class="o">=</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">s</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="one_cycle"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.one_cycle">[docs]</a><span class="k">def</span> <span class="nf">one_cycle</span><span class="p">(</span><span class="n">y1</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">y2</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="c1"># lambda function for sinusoidal ramp from y1 to y2</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">steps</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span> <span class="o">+</span> <span class="n">y1</span></div>
+
+
+<div class="viewcode-block" id="colorstr"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.colorstr">[docs]</a><span class="k">def</span> <span class="nf">colorstr</span><span class="p">(</span><span class="o">*</span><span class="nb">input</span><span class="p">):</span>
+    <span class="c1"># Colors a string https://en.wikipedia.org/wiki/ANSI_escape_code, i.e.  colorstr(&#39;blue&#39;, &#39;hello world&#39;)</span>
+    <span class="c1"># color arguments, string</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">string</span> <span class="o">=</span> <span class="nb">input</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="nb">input</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;black&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[30m&#39;</span><span class="p">,</span>  <span class="c1"># basic colors</span>
+              <span class="s1">&#39;red&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[31m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;green&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[32m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;yellow&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[33m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;blue&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[34m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;magenta&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[35m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;cyan&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[36m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;white&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[37m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_black&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[90m&#39;</span><span class="p">,</span>  <span class="c1"># bright colors</span>
+              <span class="s1">&#39;bright_red&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[91m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_green&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[92m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_yellow&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[93m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_blue&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[94m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_magenta&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[95m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_cyan&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[96m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;bright_white&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[97m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[0m&#39;</span><span class="p">,</span>  <span class="c1"># misc</span>
+              <span class="s1">&#39;bold&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[1m&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;underline&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\033</span><span class="s1">[4m&#39;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">string</span><span class="si">}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">colors</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="labels_to_class_weights"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.labels_to_class_weights">[docs]</a><span class="k">def</span> <span class="nf">labels_to_class_weights</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">nc</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
+    <span class="c1"># Get class weights (inverse frequency) from training labels</span>
+    <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># no labels loaded</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">()</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># labels.shape = (866643, 5) for COCO</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>  <span class="c1"># labels = [class xywh]</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">classes</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">nc</span><span class="p">)</span>  <span class="c1"># occurrences per class</span>
+
+    <span class="c1"># Prepend gridpoint count (for uCE training)</span>
+    <span class="c1"># gpi = ((320 / 32 * np.array([1, 2, 4])) ** 2 * 3).sum()  # gridpoints per image</span>
+    <span class="c1"># weights = np.hstack([gpi * len(labels)  - weights.sum() * 9, weights * 9]) ** 0.5  # prepend gridpoints to start</span>
+
+    <span class="n">weights</span><span class="p">[</span><span class="n">weights</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># replace empty bins with 1</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">weights</span>  <span class="c1"># number of targets per class</span>
+    <span class="n">weights</span> <span class="o">/=</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># normalize</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="labels_to_image_weights"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.labels_to_image_weights">[docs]</a><span class="k">def</span> <span class="nf">labels_to_image_weights</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">nc</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">class_weights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">80</span><span class="p">)):</span>
+    <span class="c1"># Produces image weights based on class_weights and image contents</span>
+    <span class="n">class_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">),</span> <span class="n">minlength</span><span class="o">=</span><span class="n">nc</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
+    <span class="n">image_weights</span> <span class="o">=</span> <span class="p">(</span><span class="n">class_weights</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nc</span><span class="p">)</span> <span class="o">*</span> <span class="n">class_counts</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># index = random.choices(range(n), weights=image_weights, k=1)  # weight image sample</span>
+    <span class="k">return</span> <span class="n">image_weights</span></div>
+
+
+<div class="viewcode-block" id="coco80_to_coco91_class"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.coco80_to_coco91_class">[docs]</a><span class="k">def</span> <span class="nf">coco80_to_coco91_class</span><span class="p">():</span>  <span class="c1"># converts 80-index (val2014) to 91-index (paper)</span>
+    <span class="c1"># https://tech.amikelive.com/node-718/what-object-categories-labels-are-in-coco-dataset/</span>
+    <span class="c1"># a = np.loadtxt(&#39;data/coco.names&#39;, dtype=&#39;str&#39;, delimiter=&#39;\n&#39;)</span>
+    <span class="c1"># b = np.loadtxt(&#39;data/coco_paper.names&#39;, dtype=&#39;str&#39;, delimiter=&#39;\n&#39;)</span>
+    <span class="c1"># x1 = [list(a[i] == b).index(True) + 1 for i in range(80)]  # darknet to coco</span>
+    <span class="c1"># x2 = [list(b[i] == a).index(True) if any(b[i] == a) else None for i in range(91)]  # coco to darknet</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span>
+         <span class="mi">35</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">52</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">55</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">61</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span>
+         <span class="mi">64</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">73</span><span class="p">,</span> <span class="mi">74</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">78</span><span class="p">,</span> <span class="mi">79</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">82</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="mi">86</span><span class="p">,</span> <span class="mi">87</span><span class="p">,</span> <span class="mi">88</span><span class="p">,</span> <span class="mi">89</span><span class="p">,</span> <span class="mi">90</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="xyxy2xywh"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.xyxy2xywh">[docs]</a><span class="k">def</span> <span class="nf">xyxy2xywh</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="c1"># Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># x center</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># y center</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># width</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># height</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="xywh2xyxy"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.xywh2xyxy">[docs]</a><span class="k">def</span> <span class="nf">xywh2xyxy</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="c1"># Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># top left x</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># top left y</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># bottom right x</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># bottom right y</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="xywhn2xyxy"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.xywhn2xyxy">[docs]</a><span class="k">def</span> <span class="nf">xywhn2xyxy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">padw</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padh</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="c1"># Convert nx4 boxes from [x, y, w, h] normalized to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">padw</span>  <span class="c1"># top left x</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">padh</span>  <span class="c1"># top left y</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">padw</span>  <span class="c1"># bottom right x</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">padh</span>  <span class="c1"># bottom right y</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="xyn2xy"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.xyn2xy">[docs]</a><span class="k">def</span> <span class="nf">xyn2xy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">padw</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">padh</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="c1"># Convert normalized segments into pixel segments, shape (n,2)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">padw</span>  <span class="c1"># top left x</span>
+    <span class="n">y</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">padh</span>  <span class="c1"># top left y</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+<div class="viewcode-block" id="segment2box"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.segment2box">[docs]</a><span class="k">def</span> <span class="nf">segment2box</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">640</span><span class="p">):</span>
+    <span class="c1"># Convert 1 segment label to 1 box label, applying inside-image constraint, i.e. (xy1, xy2, ...) to (xyxy)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># segment xy</span>
+    <span class="n">inside</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">width</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;=</span> <span class="n">height</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">inside</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">inside</span><span class="p">]</span>
+    <span class="c1"># xyxy</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()])</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="segments2boxes"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.segments2boxes">[docs]</a><span class="k">def</span> <span class="nf">segments2boxes</span><span class="p">(</span><span class="n">segments</span><span class="p">):</span>
+    <span class="c1"># Convert segment labels to box labels, i.e. (cls, xy1, xy2, ...) to (cls, xywh)</span>
+    <span class="n">boxes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># segment xy</span>
+        <span class="n">boxes</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()])</span>  <span class="c1"># cls, xyxy</span>
+    <span class="k">return</span> <span class="n">xyxy2xywh</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">boxes</span><span class="p">))</span>  <span class="c1"># cls, xywh</span></div>
+
+
+<div class="viewcode-block" id="resample_segments"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.resample_segments">[docs]</a><span class="k">def</span> <span class="nf">resample_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="c1"># Up-sample an (n,2) segment</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">segments</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">xp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+        <span class="n">segments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">xp</span><span class="p">,</span> <span class="n">s</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># segment xy</span>
+    <span class="k">return</span> <span class="n">segments</span></div>
+
+
+<div class="viewcode-block" id="scale_coords"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.scale_coords">[docs]</a><span class="k">def</span> <span class="nf">scale_coords</span><span class="p">(</span><span class="n">img1_shape</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">img0_shape</span><span class="p">,</span> <span class="n">ratio_pad</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># Rescale coords (xyxy) from img1_shape to img0_shape</span>
+    <span class="k">if</span> <span class="n">ratio_pad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># calculate from img0_shape</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">img1_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">img0_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                   <span class="n">img1_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">img0_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># gain  = old / new</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="p">(</span><span class="n">img1_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">img0_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">gain</span><span class="p">)</span> <span class="o">/</span> \
+            <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">img1_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">img0_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gain</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># wh padding</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="n">ratio_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="n">ratio_pad</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">coords</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># x padding</span>
+    <span class="n">coords</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">pad</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># y padding</span>
+    <span class="n">coords</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">/=</span> <span class="n">gain</span>
+    <span class="n">clip_coords</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">img0_shape</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">coords</span></div>
+
+
+<div class="viewcode-block" id="clip_coords"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.clip_coords">[docs]</a><span class="k">def</span> <span class="nf">clip_coords</span><span class="p">(</span><span class="n">boxes</span><span class="p">,</span> <span class="n">img_shape</span><span class="p">):</span>
+    <span class="c1"># Clip bounding xyxy bounding boxes to image shape (height, width)</span>
+    <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># x1</span>
+    <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># y1</span>
+    <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># x2</span>
+    <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># y2</span></div>
+
+
+<div class="viewcode-block" id="bbox_iou"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.bbox_iou">[docs]</a><span class="k">def</span> <span class="nf">bbox_iou</span><span class="p">(</span><span class="n">box1</span><span class="p">,</span> <span class="n">box2</span><span class="p">,</span> <span class="n">x1y1x2y2</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">GIoU</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">DIoU</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">CIoU</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">):</span>
+    <span class="c1"># Returns the IoU of box1 to box2. box1 is 4, box2 is nx4</span>
+    <span class="n">box2</span> <span class="o">=</span> <span class="n">box2</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># Get the coordinates of bounding boxes</span>
+    <span class="k">if</span> <span class="n">x1y1x2y2</span><span class="p">:</span>  <span class="c1"># x1, y1, x2, y2 = box1</span>
+        <span class="n">b1_x1</span><span class="p">,</span> <span class="n">b1_y1</span><span class="p">,</span> <span class="n">b1_x2</span><span class="p">,</span> <span class="n">b1_y2</span> <span class="o">=</span> <span class="n">box1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">box1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">box1</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">box1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">b2_x1</span><span class="p">,</span> <span class="n">b2_y1</span><span class="p">,</span> <span class="n">b2_x2</span><span class="p">,</span> <span class="n">b2_y2</span> <span class="o">=</span> <span class="n">box2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">box2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">box2</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">box2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># transform from xywh to xyxy</span>
+        <span class="n">b1_x1</span><span class="p">,</span> <span class="n">b1_x2</span> <span class="o">=</span> <span class="n">box1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">box1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">box1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">box1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">b1_y1</span><span class="p">,</span> <span class="n">b1_y2</span> <span class="o">=</span> <span class="n">box1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">box1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">box1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">box1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">b2_x1</span><span class="p">,</span> <span class="n">b2_x2</span> <span class="o">=</span> <span class="n">box2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">box2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">box2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">box2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">b2_y1</span><span class="p">,</span> <span class="n">b2_y2</span> <span class="o">=</span> <span class="n">box2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">box2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">box2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">box2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="c1"># Intersection area</span>
+    <span class="n">inter</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">b1_x2</span><span class="p">,</span> <span class="n">b2_x2</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">b1_x1</span><span class="p">,</span> <span class="n">b2_x1</span><span class="p">))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> \
+            <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">b1_y2</span><span class="p">,</span> <span class="n">b2_y2</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">b1_y1</span><span class="p">,</span> <span class="n">b2_y1</span><span class="p">))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Union Area</span>
+    <span class="n">w1</span><span class="p">,</span> <span class="n">h1</span> <span class="o">=</span> <span class="n">b1_x2</span> <span class="o">-</span> <span class="n">b1_x1</span><span class="p">,</span> <span class="n">b1_y2</span> <span class="o">-</span> <span class="n">b1_y1</span> <span class="o">+</span> <span class="n">eps</span>
+    <span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">b2_x2</span> <span class="o">-</span> <span class="n">b2_x1</span><span class="p">,</span> <span class="n">b2_y2</span> <span class="o">-</span> <span class="n">b2_y1</span> <span class="o">+</span> <span class="n">eps</span>
+    <span class="n">union</span> <span class="o">=</span> <span class="n">w1</span> <span class="o">*</span> <span class="n">h1</span> <span class="o">+</span> <span class="n">w2</span> <span class="o">*</span> <span class="n">h2</span> <span class="o">-</span> <span class="n">inter</span> <span class="o">+</span> <span class="n">eps</span>
+
+    <span class="n">iou</span> <span class="o">=</span> <span class="n">inter</span> <span class="o">/</span> <span class="n">union</span>
+    <span class="k">if</span> <span class="n">GIoU</span> <span class="ow">or</span> <span class="n">DIoU</span> <span class="ow">or</span> <span class="n">CIoU</span><span class="p">:</span>
+        <span class="c1"># convex (smallest enclosing box) width</span>
+        <span class="n">cw</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">b1_x2</span><span class="p">,</span> <span class="n">b2_x2</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">b1_x1</span><span class="p">,</span> <span class="n">b2_x1</span><span class="p">)</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">b1_y2</span><span class="p">,</span> <span class="n">b2_y2</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">b1_y1</span><span class="p">,</span> <span class="n">b2_y1</span><span class="p">)</span>  <span class="c1"># convex height</span>
+        <span class="k">if</span> <span class="n">CIoU</span> <span class="ow">or</span> <span class="n">DIoU</span><span class="p">:</span>  <span class="c1"># Distance or Complete IoU https://arxiv.org/abs/1911.08287v1</span>
+            <span class="n">c2</span> <span class="o">=</span> <span class="n">cw</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">ch</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">eps</span>  <span class="c1"># convex diagonal squared</span>
+            <span class="n">rho2</span> <span class="o">=</span> <span class="p">((</span><span class="n">b2_x1</span> <span class="o">+</span> <span class="n">b2_x2</span> <span class="o">-</span> <span class="n">b1_x1</span> <span class="o">-</span> <span class="n">b1_x2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span>
+                    <span class="p">(</span><span class="n">b2_y1</span> <span class="o">+</span> <span class="n">b2_y2</span> <span class="o">-</span> <span class="n">b1_y1</span> <span class="o">-</span> <span class="n">b1_y2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># center distance squared</span>
+            <span class="k">if</span> <span class="n">DIoU</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">iou</span> <span class="o">-</span> <span class="n">rho2</span> <span class="o">/</span> <span class="n">c2</span>  <span class="c1"># DIoU</span>
+            <span class="k">elif</span> <span class="n">CIoU</span><span class="p">:</span>  <span class="c1"># https://github.com/Zzh-tju/DIoU-SSD-pytorch/blob/master/utils/box/box_utils.py#L47</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> \
+                    <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">atan</span><span class="p">(</span><span class="n">w2</span> <span class="o">/</span> <span class="n">h2</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">atan</span><span class="p">(</span><span class="n">w1</span> <span class="o">/</span> <span class="n">h1</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                    <span class="n">alpha</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">iou</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">iou</span> <span class="o">-</span> <span class="p">(</span><span class="n">rho2</span> <span class="o">/</span> <span class="n">c2</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span>  <span class="c1"># CIoU</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># GIoU https://arxiv.org/pdf/1902.09630.pdf</span>
+            <span class="n">c_area</span> <span class="o">=</span> <span class="n">cw</span> <span class="o">*</span> <span class="n">ch</span> <span class="o">+</span> <span class="n">eps</span>  <span class="c1"># convex area</span>
+            <span class="k">return</span> <span class="n">iou</span> <span class="o">-</span> <span class="p">(</span><span class="n">c_area</span> <span class="o">-</span> <span class="n">union</span><span class="p">)</span> <span class="o">/</span> <span class="n">c_area</span>  <span class="c1"># GIoU</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">iou</span>  <span class="c1"># IoU</span></div>
+
+
+<div class="viewcode-block" id="box_iou"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.box_iou">[docs]</a><span class="k">def</span> <span class="nf">box_iou</span><span class="p">(</span><span class="n">box1</span><span class="p">,</span> <span class="n">box2</span><span class="p">):</span>
+    <span class="c1"># https://github.com/pytorch/vision/blob/master/torchvision/ops/boxes.py</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return intersection-over-union (Jaccard index) of boxes.</span>
+<span class="sd">    Both sets of boxes are expected to be in (x1, y1, x2, y2) format.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        box1 (Tensor[N, 4])</span>
+<span class="sd">        box2 (Tensor[M, 4])</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        iou (Tensor[N, M]): the NxM matrix containing the pairwise</span>
+<span class="sd">            IoU values for every element in boxes1 and boxes2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">box_area</span><span class="p">(</span><span class="n">box</span><span class="p">):</span>
+        <span class="c1"># box = 4xn</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span> <span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">area1</span> <span class="o">=</span> <span class="n">box_area</span><span class="p">(</span><span class="n">box1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">area2</span> <span class="o">=</span> <span class="n">box_area</span><span class="p">(</span><span class="n">box2</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="c1"># inter(N,M) = (rb(N,M,2) - lt(N,M,2)).clamp(0).prod(2)</span>
+    <span class="n">inter</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">box1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">:],</span> <span class="n">box2</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:])</span> <span class="o">-</span>
+             <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">box1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="n">box2</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># iou = inter / (area1 + area2 - inter)</span>
+    <span class="k">return</span> <span class="n">inter</span> <span class="o">/</span> <span class="p">(</span><span class="n">area1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">area2</span> <span class="o">-</span> <span class="n">inter</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="wh_iou"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.wh_iou">[docs]</a><span class="k">def</span> <span class="nf">wh_iou</span><span class="p">(</span><span class="n">wh1</span><span class="p">,</span> <span class="n">wh2</span><span class="p">):</span>
+    <span class="c1"># Returns the nxm IoU matrix. wh1 is nx2, wh2 is mx2</span>
+    <span class="n">wh1</span> <span class="o">=</span> <span class="n">wh1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># [N,1,2]</span>
+    <span class="n">wh2</span> <span class="o">=</span> <span class="n">wh2</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>  <span class="c1"># [1,M,2]</span>
+    <span class="n">inter</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">wh1</span><span class="p">,</span> <span class="n">wh2</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># [N,M]</span>
+    <span class="c1"># iou = inter / (area1 + area2 - inter)</span>
+    <span class="k">return</span> <span class="n">inter</span> <span class="o">/</span> <span class="p">(</span><span class="n">wh1</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">wh2</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">inter</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="non_max_suppression"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.non_max_suppression">[docs]</a><span class="k">def</span> <span class="nf">non_max_suppression</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">iou_thres</span><span class="o">=</span><span class="mf">0.45</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agnostic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">multi_label</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">labels</span><span class="o">=</span><span class="p">(),</span> <span class="n">max_det</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Runs Non-Maximum Suppression (NMS) on inference results</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">         list of detections, on (n,6) tensor per image [xyxy, conf, cls]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nc</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">5</span>  <span class="c1"># number of classes</span>
+    <span class="n">xc</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">conf_thres</span>  <span class="c1"># candidates</span>
+
+    <span class="c1"># Checks</span>
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">conf_thres</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Invalid Confidence threshold </span><span class="si">{</span><span class="n">conf_thres</span><span class="si">}</span><span class="s1">, valid values are between 0.0 and 1.0&#39;</span>
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">iou_thres</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Invalid IoU </span><span class="si">{</span><span class="n">iou_thres</span><span class="si">}</span><span class="s1">, valid values are between 0.0 and 1.0&#39;</span>
+
+    <span class="c1"># Settings</span>
+    <span class="c1"># (pixels) minimum and maximum box width and height</span>
+    <span class="n">min_wh</span><span class="p">,</span> <span class="n">max_wh</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4096</span>
+    <span class="n">max_nms</span> <span class="o">=</span> <span class="mi">30000</span>  <span class="c1"># maximum number of boxes into torchvision.ops.nms()</span>
+    <span class="n">time_limit</span> <span class="o">=</span> <span class="mf">10.0</span>  <span class="c1"># seconds to quit after</span>
+    <span class="n">redundant</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># require redundant detections</span>
+    <span class="n">multi_label</span> <span class="o">&amp;=</span> <span class="n">nc</span> <span class="o">&gt;</span> <span class="mi">1</span>  <span class="c1"># multiple labels per box (adds 0.5ms/img)</span>
+    <span class="n">merge</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># use merge-NMS</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">prediction</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+              <span class="p">]</span> <span class="o">*</span> <span class="n">prediction</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">xi</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">prediction</span><span class="p">):</span>  <span class="c1"># image index, image inference</span>
+        <span class="c1"># Apply constraints</span>
+        <span class="c1"># x[((x[..., 2:4] &lt; min_wh) | (x[..., 2:4] &gt; max_wh)).any(1), 4] = 0  # width-height</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">xc</span><span class="p">[</span><span class="n">xi</span><span class="p">]]</span>  <span class="c1"># confidence</span>
+
+        <span class="c1"># Cat apriori labels if autolabelling</span>
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">xi</span><span class="p">]):</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">xi</span><span class="p">]</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="n">nc</span> <span class="o">+</span> <span class="mi">5</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">v</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span>  <span class="c1"># box</span>
+            <span class="n">v</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># conf</span>
+            <span class="n">v</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)),</span> <span class="n">l</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># cls</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># If none remain process next image</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Compute conf</span>
+        <span class="n">x</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:]</span> <span class="o">*=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span>  <span class="c1"># conf = obj_conf * cls_conf</span>
+
+        <span class="c1"># Box (center x, center y, width, height) to (x1, y1, x2, y2)</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">xywh2xyxy</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">])</span>
+
+        <span class="c1"># Detections matrix nx6 (xyxy, conf, cls)</span>
+        <span class="k">if</span> <span class="n">multi_label</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="n">conf_thres</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">box</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">5</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">j</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">()),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># best class only</span>
+            <span class="n">conf</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">box</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">float</span><span class="p">()),</span> <span class="mi">1</span><span class="p">)[</span>
+                <span class="n">conf</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">conf_thres</span><span class="p">]</span>
+
+        <span class="c1"># Filter by class</span>
+        <span class="k">if</span> <span class="n">classes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[(</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">classes</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+
+        <span class="c1"># Apply finite constraint</span>
+        <span class="c1"># if not torch.isfinite(x).all():</span>
+        <span class="c1">#     x = x[torch.isfinite(x).all(1)]</span>
+
+        <span class="c1"># Check shape</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># number of boxes</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">n</span><span class="p">:</span>  <span class="c1"># no boxes</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">max_nms</span><span class="p">:</span>  <span class="c1"># excess boxes</span>
+            <span class="c1"># sort by confidence</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">x</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">max_nms</span><span class="p">]]</span>
+
+        <span class="c1"># Batched NMS</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">agnostic</span> <span class="k">else</span> <span class="n">max_wh</span><span class="p">)</span>  <span class="c1"># classes</span>
+        <span class="c1"># boxes (offset by class), scores</span>
+        <span class="n">boxes</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="n">c</span><span class="p">,</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">nms</span><span class="p">(</span><span class="n">boxes</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">iou_thres</span><span class="p">)</span>  <span class="c1"># NMS</span>
+        <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_det</span><span class="p">:</span>  <span class="c1"># limit detections</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="p">[:</span><span class="n">max_det</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mf">3E3</span><span class="p">):</span>  <span class="c1"># Merge NMS (boxes merged using weighted mean)</span>
+            <span class="c1"># update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)</span>
+            <span class="n">iou</span> <span class="o">=</span> <span class="n">box_iou</span><span class="p">(</span><span class="n">boxes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">boxes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">iou_thres</span>  <span class="c1"># iou matrix</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">iou</span> <span class="o">*</span> <span class="n">scores</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>  <span class="c1"># box weights</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">])</span><span class="o">.</span><span class="n">float</span><span class="p">(</span>
+            <span class="p">)</span> <span class="o">/</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># merged boxes</span>
+            <span class="k">if</span> <span class="n">redundant</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="n">iou</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># require redundancy</span>
+
+        <span class="n">output</span><span class="p">[</span><span class="n">xi</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">time_limit</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;WARNING: NMS time limit </span><span class="si">{</span><span class="n">time_limit</span><span class="si">}</span><span class="s1">s exceeded&#39;</span><span class="p">)</span>
+            <span class="k">break</span>  <span class="c1"># time limit exceeded</span>
+
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+<span class="c1"># from utils.general import *; strip_optimizer()</span>
+<div class="viewcode-block" id="strip_optimizer"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.strip_optimizer">[docs]</a><span class="k">def</span> <span class="nf">strip_optimizer</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="s1">&#39;best.pt&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="c1"># Strip optimizer from &#39;f&#39; to finalize training, optionally save as &#39;s&#39;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ema&#39;</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;ema&#39;</span><span class="p">]</span>  <span class="c1"># replace model with ema</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="s1">&#39;optimizer&#39;</span><span class="p">,</span> <span class="s1">&#39;training_results&#39;</span><span class="p">,</span> <span class="s1">&#39;wandb_id&#39;</span><span class="p">,</span> <span class="s1">&#39;ema&#39;</span><span class="p">,</span> <span class="s1">&#39;updates&#39;</span><span class="p">:</span>  <span class="c1"># keys</span>
+        <span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">x</span><span class="p">[</span><span class="s1">&#39;epoch&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">x</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>  <span class="c1"># to FP16</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">s</span> <span class="ow">or</span> <span class="n">f</span><span class="p">)</span>
+    <span class="n">mb</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">s</span> <span class="ow">or</span> <span class="n">f</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1E6</span>  <span class="c1"># filesize</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Optimizer stripped from </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="p">(</span><span class="s1">&#39; saved as </span><span class="si">%s</span><span class="s1">,&#39;</span> <span class="o">%</span> <span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mb</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">MB&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="print_mutation"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.print_mutation">[docs]</a><span class="k">def</span> <span class="nf">print_mutation</span><span class="p">(</span><span class="n">hyp</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">yaml_file</span><span class="o">=</span><span class="s1">&#39;hyp_evolved.yaml&#39;</span><span class="p">,</span> <span class="n">bucket</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="c1"># Print mutation results to evolve.txt (for use with train.py --evolve)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%10s</span><span class="s1">&#39;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">hyp</span><span class="p">)</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">hyp</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>  <span class="c1"># hyperparam keys</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%10.3g</span><span class="s1">&#39;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">hyp</span><span class="p">)</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">hyp</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>  <span class="c1"># hyperparam values</span>
+    <span class="c1"># results (P, R, mAP@0.5, mAP@0.5:0.95, val_losses x 3)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%10.4g</span><span class="s1">&#39;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">%</span> <span class="n">results</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s1">Evolved fitness: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">bucket</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;gs://</span><span class="si">%s</span><span class="s1">/evolve.txt&#39;</span> <span class="o">%</span> <span class="n">bucket</span>
+        <span class="k">if</span> <span class="n">gsutil_getsize</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="s1">&#39;evolve.txt&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;evolve.txt&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="c1"># download evolve.txt if larger than local</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;gsutil cp </span><span class="si">%s</span><span class="s1"> .&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;evolve.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>  <span class="c1"># append result</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">c</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s1">&#39;evolve.txt&#39;</span><span class="p">,</span> <span class="n">ndmin</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                  <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># load unique rows</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">fitness</span><span class="p">(</span><span class="n">x</span><span class="p">))]</span>  <span class="c1"># sort</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s1">&#39;evolve.txt&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%10.3g</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># save sort by fitness</span>
+
+    <span class="c1"># Save yaml</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hyp</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">hyp</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">7</span><span class="p">])</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">7</span><span class="p">])</span>
+        <span class="c1"># results (P, R, mAP@0.5, mAP@0.5:0.95, val_losses x 3)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%10.4g</span><span class="s1">&#39;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">%</span> <span class="n">results</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# Hyperparameter Evolution Results</span><span class="se">\n</span><span class="s1"># Generations: </span><span class="si">%g</span><span class="se">\n</span><span class="s1"># Metrics: &#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span><span class="n">hyp</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">bucket</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;gsutil cp evolve.txt </span><span class="si">%s</span><span class="s1"> gs://</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                  <span class="p">(</span><span class="n">yaml_file</span><span class="p">,</span> <span class="n">bucket</span><span class="p">))</span>  <span class="c1"># upload</span></div>
+
+
+<div class="viewcode-block" id="apply_classifier"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.apply_classifier">[docs]</a><span class="k">def</span> <span class="nf">apply_classifier</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">im0</span><span class="p">):</span>
+    <span class="c1"># Apply a second stage classifier to yolo outputs</span>
+    <span class="n">im0</span> <span class="o">=</span> <span class="p">[</span><span class="n">im0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="n">im0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># per image</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+            <span class="c1"># Reshape and pad cutouts</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">xyxy2xywh</span><span class="p">(</span><span class="n">d</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">])</span>  <span class="c1"># boxes</span>
+            <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># rectangle to square</span>
+            <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">*</span> <span class="mf">1.3</span> <span class="o">+</span> <span class="mi">30</span>  <span class="c1"># pad</span>
+            <span class="n">d</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">xywh2xyxy</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+
+            <span class="c1"># Rescale boxes from img_size to im0 size</span>
+            <span class="n">scale_coords</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:],</span> <span class="n">d</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">im0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+            <span class="c1"># Classes</span>
+            <span class="n">pred_cls1</span> <span class="o">=</span> <span class="n">d</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+            <span class="n">ims</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>  <span class="c1"># per item</span>
+                <span class="n">cutout</span> <span class="o">=</span> <span class="n">im0</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">])]</span>
+                <span class="n">im</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">cutout</span><span class="p">,</span> <span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">))</span>  <span class="c1"># BGR</span>
+                <span class="c1"># cv2.imwrite(&#39;test%i.jpg&#39; % j, cutout)</span>
+
+                <span class="c1"># BGR to RGB, to 3x416x416</span>
+                <span class="n">im</span> <span class="o">=</span> <span class="n">im</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">im</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span>
+                    <span class="n">im</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>  <span class="c1"># uint8 to float32</span>
+                <span class="n">im</span> <span class="o">/=</span> <span class="mf">255.0</span>  <span class="c1"># 0 - 255 to 0.0 - 1.0</span>
+                <span class="n">ims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
+
+            <span class="n">pred_cls2</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">ims</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                              <span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># classifier prediction</span>
+            <span class="c1"># retain matching class detections</span>
+            <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">pred_cls1</span> <span class="o">==</span> <span class="n">pred_cls2</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="save_one_box"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.save_one_box">[docs]</a><span class="k">def</span> <span class="nf">save_one_box</span><span class="p">(</span><span class="n">xyxy</span><span class="p">,</span> <span class="n">im</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s1">&#39;image.jpg&#39;</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="mf">1.02</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">square</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">BGR</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1"># Save image crop as {file} with crop size multiple {gain} and {pad} pixels. Save and/or return crop</span>
+    <span class="n">xyxy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">xyxy</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">xyxy2xywh</span><span class="p">(</span><span class="n">xyxy</span><span class="p">)</span>  <span class="c1"># boxes</span>
+    <span class="k">if</span> <span class="n">square</span><span class="p">:</span>
+        <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">)</span>  <span class="c1"># attempt rectangle to square</span>
+    <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">*</span> <span class="n">gain</span> <span class="o">+</span> <span class="n">pad</span>  <span class="c1"># box wh * gain + pad</span>
+    <span class="n">xyxy</span> <span class="o">=</span> <span class="n">xywh2xyxy</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+    <span class="n">clip_coords</span><span class="p">(</span><span class="n">xyxy</span><span class="p">,</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">crop</span> <span class="o">=</span> <span class="n">im</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]):</span><span class="nb">int</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]):</span><span class="nb">int</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="p">::(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">BGR</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">increment_path</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">mkdir</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s1">&#39;.jpg&#39;</span><span class="p">)),</span> <span class="n">crop</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">crop</span></div>
+
+
+<div class="viewcode-block" id="increment_path"><a class="viewcode-back" href="../../../../src.yolov5.utils.html#src.yolov5.utils.general.increment_path">[docs]</a><span class="k">def</span> <span class="nf">increment_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">mkdir</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># Increment file or directory path, i.e. runs/exp --&gt; runs/exp{sep}2, runs/exp{sep}3, ... etc.</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>  <span class="c1"># os-agnostic</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">exist_ok</span><span class="p">:</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}{</span><span class="n">sep</span><span class="si">}</span><span class="s2">*&quot;</span><span class="p">)</span>  <span class="c1"># similar paths</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;%s</span><span class="si">{</span><span class="n">sep</span><span class="si">}</span><span class="s2">(\d+)&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches</span> <span class="k">if</span> <span class="n">m</span><span class="p">]</span>  <span class="c1"># indices</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">i</span> <span class="k">else</span> <span class="mi">2</span>  <span class="c1"># increment number</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}{</span><span class="n">sep</span><span class="si">}{</span><span class="n">n</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># update path</span>
+    <span class="nb">dir</span> <span class="o">=</span> <span class="n">path</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span>  <span class="c1"># directory</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">mkdir</span><span class="p">:</span>
+        <span class="nb">dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># make directory</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, HikaruShindo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<style>
+    /* Sidebar header (and topbar for mobile) */
+    .wy-side-nav-search,
+    .wy-nav-top {
+        background: #080a52ff;
+    }
+
+    /* Sidebar */
+    .wy-nav-side {
+        background: #080a52ff;
+    }
+</style>
+
+
+</body>
+</html>
