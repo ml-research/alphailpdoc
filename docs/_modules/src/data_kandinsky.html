@@ -84,6 +84,7 @@
 <span class="kn">import</span> <span class="nn">random</span>
 <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 
+
 <div class="viewcode-block" id="KANDINSKY"><a class="viewcode-back" href="../../src.html#src.data_kandinsky.KANDINSKY">[docs]</a><span class="k">class</span> <span class="nc">KANDINSKY</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Kandinsky Patterns dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -126,7 +127,6 @@
         <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span>
         <span class="n">filenames</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
 
-
     <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="o">!=</span> <span class="s1">&#39;.DS_Store&#39;</span><span class="p">:</span>
             <span class="n">image_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">true_folder</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
@@ -161,7 +161,6 @@
         <span class="c1"># sample 500</span>
         <span class="c1"># only validation is used to generate clauses</span>
 
-
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="n">image</span> <span class="o">=</span> <span class="n">load_image_yolo</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image_paths</span><span class="p">[</span><span class="n">item</span><span class="p">],</span> <span class="n">img_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">img_size</span><span class="p">)</span>
@@ -173,6 +172,7 @@
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="load_images_and_labels_positive"><a class="viewcode-back" href="../../src.html#src.data_kandinsky.load_images_and_labels_positive">[docs]</a><span class="k">def</span> <span class="nf">load_images_and_labels_positive</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;twopairs&#39;</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">small_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Load image paths and labels for kandinsky dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -182,13 +182,14 @@
     <span class="n">true_folder</span> <span class="o">=</span> <span class="n">folder</span> <span class="o">+</span> <span class="s1">&#39;true/&#39;</span>
 
     <span class="n">filenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">true_folder</span><span class="p">))[:</span><span class="mi">500</span><span class="p">]</span>
-    <span class="c1">#n = 500 #int(len(filenames)/10)</span>
+    <span class="c1"># n = 500 #int(len(filenames)/10)</span>
     <span class="c1">#filenames = random.sample(filenames, n)</span>
     <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="o">!=</span> <span class="s1">&#39;.DS_Store&#39;</span><span class="p">:</span>
             <span class="n">image_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">true_folder</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
             <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">image_paths</span><span class="p">,</span> <span class="n">labels</span></div>
+
 
 <div class="viewcode-block" id="letterbox"><a class="viewcode-back" href="../../src.html#src.data_kandinsky.letterbox">[docs]</a><span class="k">def</span> <span class="nf">letterbox</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">new_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">),</span> <span class="n">auto</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scaleFill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scaleup</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A utilitiy function for yolov5 model to make predictions. The implementation is from the yolov5 repository.</span>
